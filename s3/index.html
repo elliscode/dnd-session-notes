@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Ellis Bake Shop</title>
+  <meta name="description" content="Order your macarons today! Local pickup only!">
+  <meta name="author" content="Daniel Ellis Townsend">
+  <meta name="viewport" content="width=device-width">
+  <meta name="theme-color" content="#fdf0fb">
+  <link rel="shortcut icon" type="image/jpg" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="preload" href="https://fonts.gstatic.com/s/opensans/v43/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-mu0SC55I.woff2" as="font" type="font/woff" crossorigin="anonymous">
+  <style>
+@media only screen and (max-width: 250px) {
+}
+
+@media only screen and (min-width: 251px) and (max-width: 500px) {
+}
+
+@media only screen and (min-width: 501px)and (max-width: 850px) {
+}
+
+@media only screen and (min-width: 501px) and (max-width: 1000px) {
+}
+
+@media only screen and (min-width: 1001px) {
+}
+
+* {
+  font-family: 'Open Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button {
+  font-size: 16px;
+  border-radius: 20px;
+  padding: 5px 15px;
+  background-color: #ffffff00;
+  border: 1px solid #ccc;
+  cursor:pointer;
+}
+
+button:hover {
+  background-color: #eee;
+}
+
+button:active {
+  background-color: #ddd;
+}
+
+.selected {
+  background-color: #ddd;
+}
+
+#header {
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#header h1 {
+  font-weight: 500;
+}
+
+#content {
+  display:flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#content > * {
+  margin-top:0px;
+}
+
+.row  {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.login {
+  display:flex;
+  width: 350px;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.flex {
+  display: flex;
+}
+
+.card {
+  display: flex;
+  width: 80vw;
+  max-width: 800px;
+  margin: 40px;
+  box-sizing: border-box;
+}
+
+.login, .card {
+  border: 1px solid #ccc;
+  padding: 40px;
+  box-shadow: 5px 5px 30px #eee;
+  border-radius: 20px;
+  margin: 20px 40px;
+}
+
+.auto {
+  width: auto!important;
+}
+
+.compact {
+  padding: 10px;
+}
+
+.medium {
+  padding: 15px;
+}
+
+.large {
+  padding: 35px;
+}
+
+.column > *:first-child {
+  margin-top:0px;
+}
+
+.column > *:last-child {
+  margin-bottom:0px;
+}
+
+.card > * {
+  margin: 5px;
+}
+
+.login form {
+  display:flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.login form p {
+  margin-top: 0px;
+}
+
+.login label {
+  display:flex;
+  margin: 16px 0px 0px 0px;
+  align-items: center;
+}
+
+.login button {
+  margin: 16px 0px 0px 0px;
+}
+
+label > *:last-child {
+  flex-grow: 1;
+  margin-left: 10px;
+  font-size: 16px;
+  border-radius: 20px;
+  padding: 5px;
+  text-align:center;
+  border: 1px solid #ccc;
+}
+
+#controls {
+  display:flex;
+  position:fixed;
+  top:0px;
+  right:0px;
+  align-items: center;
+}
+
+#profile-name {
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+#profile-icon {
+  width: 50px;
+  height: 50px;
+  background-color:white;
+  border-radius: 50px;
+  border: 1px solid #ccc;
+  box-shadow: 5px 5px 30px #eee;
+  overflow:hidden;
+  background-image: url('profile.svg');
+  background-size:cover;
+  cursor:pointer;
+}
+
+#profile-icon:hover {
+  background-color: #eee;
+}
+
+#profile-icon:active {
+  background-color: #ddd;
+}
+
+#profile-menu {
+  position:fixed;
+  display:flex;
+  top:80px;
+  right:0px;
+  flex-direction:column;
+  padding-right:20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+#profile-menu div {
+  border: 1px solid #ccc;
+  border-bottom-width:0px;
+  padding: 10px 20px;
+  background-color: white;
+}
+
+#profile-menu div:last-child {
+  border-bottom-width:1px;
+}
+
+#profile-menu div:hover {
+background-color: #eee;
+}
+  </style>
+</head>
+
+<body>
+  <div id="header">
+    <h1>D&D Notes</h1>
+  </div>
+
+  <div id="controls" class="compact" style="display:none;">
+    <span id="profile-name">Ellis</span>
+    <div id="profile-icon" onclick="toggleProfileMenu(event);"></div>
+  </div>
+
+  <div id="profile-menu" style="display:none;" onmouseenter="menuHideToggle(event, false);" onmouseleave="menuHideToggle(event, true);">
+    <div>Settings</div>
+    <div>Log out</div>
+  </div>
+
+  <div id="content">
+    <div class="login" id="generate-code" style="display:none;">
+      <form onsubmit="generateCode(event);">
+        <p>Please enter your phone number to receive a log-in code.</p>
+        <label for="phone-number">Phone Number: <input type="tel" name="phone-number" id="phone-number" placeholder="(XXX) XXX-XXXX"></label>
+        <button>Get Code</button>
+      </form>
+    </div>
+    <div class="login" id="submit-code" style="display:none;">
+      <form onsubmit="submitCode(event);">
+        <p>Please enter your login code.</p>
+        <label for="phone-number-2">Phone Number: <input type="tel" name="phone-number-2" id="phone-number-2" placeholder="(XXX) XXX-XXXX" disabled></label>
+        <label for="one-time-code">One-time Code: <input type="tel" name="one-time-code" id="one-time-code" placeholder="XXX XXX"></label>
+        <button>Log In</button>
+      </form>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+const controls = document.getElementById('controls');
+const generateCodeDiv = document.getElementById('generate-code');
+const submitCodeDiv = document.getElementById('submit-code');
+const phoneNumber = document.getElementById('phone-number');
+const phoneNumber2 = document.getElementById('phone-number-2');
+const content = document.getElementById('content');
+const profileMenu = document.getElementById('profile-menu');
+let hideTimeout = undefined;
+function menuHideToggle(event, hide) {
+  clearTimeout(hideTimeout);
+  if (hide) {
+    hideTimeout = setTimeout(actuallyHideMenu, 1000);
+  }
+}
+function actuallyHideMenu(event) {
+  profileMenu.style.display = 'none';
+}
+function toggleProfileMenu(event) {
+  clearTimeout(hideTimeout);
+  if (profileMenu.style.display == 'flex') {
+    profileMenu.style.display = 'none';
+  } else { 
+    profileMenu.style.display = 'flex';
+  }
+}
+function generateCode(event) {
+  generateCodeDiv.style.display = 'none';
+  submitCodeDiv.style.display = 'flex';
+  phoneNumber2.value = phoneNumber.value;
+  event.preventDefault();
+}
+function submitCode(event) {
+  submitCodeDiv.style.display = 'none';
+  controls.style.display = 'flex';
+  generateCards();
+  event.preventDefault();
+}
+function generateCards() {
+  const json = [{date: '2025-05-27', tag: 'session', markdown: `# Lorem Ipsum Dolor Sit Amet
+
+Lorem ipsum dolor sit amet, *consectetur* adipiscing elit.  
+**Sed do eiusmod tempor incididunt** ut labore et dolore magna aliqua.
+
+## Subheading
+
+- Lorem ipsum dolor sit amet  
+- Consectetur adipiscing elit  
+- Sed do eiusmod tempor
+
+### Numbered List
+
+1. Ut enim ad minim veniam  
+2. Quis nostrud exercitation ullamco  
+3. Laboris nisi ut aliquip ex ea commodo
+
+> "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+`}, {date: '2025-06-03', tag: 'session', markdown: `# Lorem Ipsum Dolor Sit Amet
+
+Lorem ipsum dolor sit amet, *consectetur* adipiscing elit.  
+**Sed do eiusmod tempor incididunt** ut labore et dolore magna aliqua.
+
+## Subheading
+
+- Lorem ipsum dolor sit amet  
+- Consectetur adipiscing elit  
+- Sed do eiusmod tempor
+
+### Numbered List
+
+1. Ut enim ad minim veniam  
+2. Quis nostrud exercitation ullamco  
+3. Laboris nisi ut aliquip ex ea commodo
+
+> "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."`}];
+  json.sort((a,b) => b.date.localeCompare(a.date));
+  {
+    let div = document.createElement('div');
+    div.classList.add('card');
+    div.classList.add('auto');
+    div.classList.add('medium');
+    div.classList.add('column')
+    let label = document.createElement('label');
+
+    let span = document.createElement('span');
+    span.innerText = "Campaign: ";
+    label.appendChild(span);
+
+    let select = document.createElement('select');
+    let option = document.createElement('option');
+    option.innerText = 'Eberron';
+    option.value = option.innerText;
+    select.appendChild(option);
+
+    label.appendChild(select);
+    div.appendChild(label);
+    content.appendChild(div);
+  }
+  {
+    let div = document.createElement('div');
+    div.classList.add('card');
+    div.classList.add('auto');
+    div.classList.add('medium');
+    div.classList.add('row');
+
+    {
+      let button = document.createElement('button');
+      button.innerText = 'All';
+      button.classList.add('selected');
+      div.appendChild(button);
+    }
+    {
+      let button = document.createElement('button');
+      button.innerText = 'Characters';
+      div.appendChild(button);
+    }
+    {
+      let button = document.createElement('button');
+      button.innerText = 'Sessions';
+      div.appendChild(button);
+    }
+    {
+      let button = document.createElement('button');
+      button.innerText = 'Places';
+      div.appendChild(button);
+    }
+    content.appendChild(div);
+  }
+  for (let entry of json) {
+    let div = document.createElement('div');
+    div.classList.add('card');
+    div.classList.add('column');
+    div.classList.add('large');
+    div.innerHTML = marked.parse(entry.markdown);
+    content.appendChild(div);
+  }
+}
+
+generateCodeDiv.style.display = 'flex';
+  </script>
+
+</body>
+
+</html>
