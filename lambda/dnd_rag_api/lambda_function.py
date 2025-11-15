@@ -1,7 +1,7 @@
 import json
 import traceback
 
-from dndnotes.utils import (
+from dnd_rag_api.utils import (
     otp_route,
     login_route,
     path_equals,
@@ -11,7 +11,8 @@ from dndnotes.utils import (
     logged_in_check_route,
 )
 
-from dndnotes.notes import (
+from dnd_rag_api.notes import (
+    set_embedding,
     set_note,
     get_note,
 )
@@ -45,6 +46,8 @@ def route(event):
         return logged_in_check_route(event)
     if path_equals(event=event, method="POST", path="/ios-cookie-refresh"):
         return ios_cookie_refresh_route(event)
+    if path_equals(event=event, method="POST", path="/set-embedding"):
+        return set_embedding(event)
     if path_equals(event=event, method="POST", path="/set-note"):
         return set_note(event)
     if path_equals(event=event, method="POST", path="/get-note"):

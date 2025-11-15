@@ -10,6 +10,30 @@ from .utils import (
 
 
 @authenticate
+def set_embedding(event, user_data, body):
+    note_text = body.get('note', '')
+    note_id = body.get('id', None)
+    if not note_id:
+        note_id = create_id(32)
+    python_data = {
+        "key1": "embedding",
+        "key2": note_id,
+        "text": note_text,
+        "last_modified_by": user_data["key2"],
+    }
+    dynamo_data = python_obj_to_dynamo_obj(python_data)
+    dynamo.put_item(
+        TableName=TABLE_NAME,
+        Item=dynamo_data,
+    )
+    return format_response(
+        event=event,
+        http_code=200,
+        body=f"Successfully wrote note with ID {note_id}",
+    )
+
+
+@authenticate
 def set_note(event, user_data, body):
     note_text = body.get('note', '')
     note_id = body.get('id', None)

@@ -166,3 +166,4 @@ logfile
 Pipfile.lock
 *.test.py
 session-notes/*
+uv.lock
