@@ -52,5 +52,11 @@ def route(event):
         return set_note(event)
     if path_equals(event=event, method="POST", path="/get-note"):
         return get_note(event)
+    if path_equals(event=event, method="POST", path="/ping"):
+        return format_response(
+            event=event,
+            http_code=200,
+            body="pong",
+        )
 
     return format_response(event=event, http_code=404, body="No matching route found")

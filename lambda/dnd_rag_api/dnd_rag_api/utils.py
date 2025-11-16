@@ -9,8 +9,9 @@ import boto3
 from boto3.dynamodb.types import TypeDeserializer, TypeSerializer
 
 ADMIN_PHONE = os.environ.get("ADMIN_PHONE")
+HTTPS_DOMAIN_NAME = os.environ.get("HTTPS_DOMAIN_NAME")
 DOMAIN_NAME = os.environ.get("DOMAIN_NAME")
-DOMAIN_NAME_WWW = os.environ.get("DOMAIN_NAME_WWW")
+APP_NAME = os.environ.get("APP_NAME")
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME")
 SMS_SQS_QUEUE_URL = os.environ.get("SMS_SQS_QUEUE_URL")
 SMS_SQS_QUEUE_ARN = os.environ.get("SMS_SQS_QUEUE_ARN")
@@ -24,12 +25,11 @@ scheduler = boto3.client("scheduler")
 
 
 def format_response(event, http_code, body, headers=None):
+    domain_name = HTTPS_DOMAIN_NAME
     if isinstance(body, str):
         body = {"message": body}
-    if "origin" in event["headers"] and event["headers"]["origin"].startswith(DOMAIN_NAME_WWW):
-        domain_name = DOMAIN_NAME_WWW
-    elif "origin" in event["headers"] and event["headers"]["origin"].startswith(DOMAIN_NAME):
-        domain_name = DOMAIN_NAME
+    elif "origin" in event["headers"] and event["headers"]["origin"].startswith(HTTPS_DOMAIN_NAME):
+        pass
     else:
         print(f'Invalid origin {event["headers"].get("origin")}')
         http_code = 403
@@ -56,7 +56,7 @@ def parse_cookie(input):
     for cookie in cookies:
         parts = cookie.split("=")
         cookie_name = parts[0].strip(" ;")
-        if cookie_name == "dumbphoneapps-auth-token":
+        if cookie_name == f"{APP_NAME}-auth-token":
             return parts[1].strip(" ;")
 
 
@@ -184,7 +184,7 @@ def ios_cookie_refresh_route(event, user_data, body):
         http_code=200,
         body="successfully refreshed cookie",
         headers={
-            "Set-Cookie": f'dumbphoneapps-auth-token={token_data["key2"]}; Domain=.dumbphoneapps.com; Expires={date_string}; Secure; HttpOnly',
+            "Set-Cookie": f'{APP_NAME}-auth-token={token_data["key2"]}; Domain=.{DOMAIN_NAME}; Expires={date_string}; Secure; HttpOnly',
         },
     )
 
@@ -239,7 +239,7 @@ def login_route(event):
         body="successfully logged in",
         headers={
             "x-csrf-token": token_data["csrf"],
-            "Set-Cookie": f'dumbphoneapps-auth-token={token_data["key2"]}; Domain=.dumbphoneapps.com; Expires={date_string}; Secure; HttpOnly',
+            "Set-Cookie": f'{APP_NAME}-auth-token={token_data["key2"]}; Domain=.dnd.elliscode.com; Expires={date_string}; Secure; HttpOnly',
         },
     )
 
@@ -258,9 +258,7 @@ def otp_route(event):
     # get or create user data
     user_data = get_user_data(phone)
     if user_data is None:
-        user_data = create_user_data(phone)
-        alert_admin_of_new_user(phone)
-        # return format_response(event=event, http_code=200, body="User is not allowed to log in. Please ask an admin to create you an account.")
+        return format_response(event=event, http_code=401, body="User is not allowed to log in. Please ask an admin to create you an account.")
     print(user_data)
 
     # generate and set OTP
@@ -276,7 +274,7 @@ def otp_route(event):
         # generate and send message if you are creating a new otp
         message = {
             "phone": f"+1{phone}",
-            "message": f"{otp_data['otp']} is your dumbphoneapps.com one-time passcode\n\n@dumbphoneapps.com #{otp_data['otp']}",
+            "message": f"{otp_data['otp']} is your dnd.elliscode.com one-time passcode\n\n@dnd.elliscode.com #{otp_data['otp']}",
         }
         print(message)
         sqs.send_message(
@@ -287,19 +285,6 @@ def otp_route(event):
     print(otp_data)
 
     return format_response(event=event, http_code=200, body=body_value)
-
-
-def alert_admin_of_new_user(phone):
-    # generate and send message if you are creating a new user
-    message = {
-        "phone": ADMIN_PHONE,
-        "message": f"A new user has joined dumbphoneapps!\n\nPhone: {phone}",
-    }
-    print(message)
-    sqs.send_message(
-        QueueUrl=SMS_SQS_QUEUE_URL,
-        MessageBody=json.dumps(message),
-    )
 
 
 def create_token(phone):
