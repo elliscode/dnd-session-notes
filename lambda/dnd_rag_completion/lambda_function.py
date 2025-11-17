@@ -114,67 +114,47 @@ def lambda_handler(event, context):
         print(json.dumps(event))
         print(context)
 
-        # Load existing IDs to avoid re-uploading
-        existing_docs = {m["file_id"]: m for m in collection.get()["metadatas"]} if collection.count() > 0 else {}
+        body = {}
+        if isinstance(event['body'], dict):
+            body = event['body']
+        elif event['body'].startswith("{"):
+            body = json.loads(event['body'])
 
-        # Process all markdown files
-        md_files = glob.glob(os.path.join(DATA_FOLDER, "*.md"))
-        print(md_files)
-        added_chunks = 0
+        query = body['query']
 
-        file_ids = []
-        for file_path in md_files:
-            file_name = Path(file_path).name
-            file_id = file_name + file_hash(file_path)
-            file_ids.append(file_id)
-            if file_id in existing_docs:
-                print(f"Skipping {Path(file_path).name} (already embedded)")
-                continue
+        # Search top 5 relevant chunks
+        results = collection.query(
+            query_texts=[query],
+            n_results=5,
+        )
 
-            with open(file_path, "r", encoding="utf-8") as f:
-                text = f.read()
+        context = ""
+        for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
+            print(f"📄 From {meta['source']}, chunk {meta['chunk']}")
+            print(doc[:300] + "...\n")
+            context += f"<SOURCE><NAME>{meta['source']}</NAME><TEXT>{doc}</TEXT></SOURCE>"
 
-            chunks = chunk_text(text)
-            ids = [f"{file_id}_{i}" for i in range(len(chunks))]
-            metadatas = [{"file_id": file_id, "source": file_name, "chunk": i} for i in range(len(chunks))]
+        # Build prompt for LLM
+        system_prompt = """
+        You are a Dungeons & Dragons campaign assistant.
+        The question you will answer relates to a DND campaign.
+        There is no speaker or narrator, as this is a collective storytelling exercise with 7 participants.
+        Always return a list of <SOURCE>s used to determine your answer by listing the <NAME>s with a short summary of the <TEXT>s, in a markdown-style list
+        """
+        user_prompt = f"""
+        <CONTEXT>{context}</CONTEXT>
+        <QUESTION>{query}</QUESTION>"""
 
-            if len(chunks) > 0:
-                collection.upsert(
-                    documents=chunks,
-                    ids=ids,
-                    metadatas=metadatas
-                )
+        # Ask GPT-4o-mini (for example)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
 
-            print(f"✅ Added {len(chunks)} chunks from {file_name}")
-            added_chunks += len(chunks)
-
-        ids_to_delete = []
-        results = collection.get(include=["metadatas"])
-        for i, meta in enumerate(results["metadatas"]):
-            if not meta:
-                continue
-            # print(meta['file_id'])
-            if meta['file_id'] not in file_ids:
-                ids_to_delete.append(results["ids"][i])
-        # Step 4. Delete them
-        if ids_to_delete:
-            print(f"🗑️ Deleting {len(ids_to_delete)} entries (stale files removed from sessions/)")
-            collection.delete(ids=ids_to_delete)
-        else:
-            print("✅ No stale entries to delete.")
-
-        print(f"\n🎉 Done. {added_chunks} new chunks embedded and stored in '{COLLECTION_NAME}'.")
-        print(f"Total records in collection: {collection.count()}")
-
-        # Step 2 — ZIP updated Chroma snapshot
-        zip_file = "/tmp/chroma_snapshot.zip"
-        zip_directory("/tmp/chroma_data", zip_file)
-
-        # Step 3 — Upload the ZIP back to S3
-        s3.upload_file(zip_file, "daniel-townsend-dnd-notes-userspace", "chromadb.zip")
-        print(f"Uploaded {zip_file} → s3://daniel-townsend-dnd-notes-userspace/chromadb.zip")
-
-        return {"statusCode": 200, "body": f"Updated the chromadb files and changed the environment variable in the dnd_rag_api, you should be good to go now"}
+        return {"statusCode": 200, "body": response.choices[0].message.content}
     except Exception:
         traceback.print_exc()
         return {"statusCode": 500, "body": f"Internal server error"}

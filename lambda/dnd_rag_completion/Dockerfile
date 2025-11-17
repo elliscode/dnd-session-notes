@@ -6,6 +6,6 @@ RUN pip install . -t /opt/python
 
 # Copy code into runtime directory
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
-COPY dnd_rag_ingest ${LAMBDA_TASK_ROOT}/dnd_rag_ingest
+COPY dnd_rag_completion ${LAMBDA_TASK_ROOT}/dnd_rag_completion
 
 CMD ["lambda_function.lambda_handler"]
