@@ -6,11 +6,9 @@ from .utils import (
     dynamo,
     TABLE_NAME,
     format_response,
-    boto3,
     json,
+    lambda_client,
 )
-
-client = boto3.client("lambda")
 
 @authenticate
 def set_embedding(event, user_data, body):
@@ -96,12 +94,13 @@ def get_note(event, user_data, body):
 
 @authenticate
 def get_completion_route(event, user_data, body):
-    resp = client.invoke(
+    resp = lambda_client.invoke(
         FunctionName="dnd_rag_completion",
         InvocationType="RequestResponse",
         Payload=json.dumps({"body": {"query": body["query"]}})
     )
     response_body = json.loads(resp["Payload"].read().decode())
+    print(f'User: {user_data["key2"]} -- Query: {body["query"]} -- Response: {response_body["body"]}')
     return format_response(
         event=event,
         http_code=response_body["statusCode"],

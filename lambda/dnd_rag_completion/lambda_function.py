@@ -13,7 +13,7 @@ s3 = boto3.client("s3")
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
 
-s3.upload_file(Bucket=S3_BUCKET, Key=STARTING_FILE)
+s3.put_object(Bucket=S3_BUCKET, Key=STARTING_FILE, Body=b"")
 
 DATA_FOLDER = "/tmp/session-notes"
 CHROMA_PATH = "/tmp/chroma_data"
@@ -93,7 +93,7 @@ def lambda_handler(event, context):
         elif event['body'].startswith("{"):
             body = json.loads(event['body'])
 
-        query = body['query']
+        query = body.get('query')
 
         if query is None:
             return {"statusCode": 201, "body": "Successful ping, lambda is now warm"}

@@ -18,25 +18,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <link rel="preload" href="https://fonts.gstatic.com/s/opensans/v43/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-mu0SC55I.woff2" as="font" type="font/woff" crossorigin="anonymous">
   <style>
-@media only screen and (max-width: 250px) {
-}
-
-@media only screen and (min-width: 251px) and (max-width: 500px) {
-}
-
-@media only screen and (min-width: 501px)and (max-width: 850px) {
-}
-
-@media only screen and (min-width: 501px) and (max-width: 1000px) {
-}
-
-@media only screen and (min-width: 1001px) {
-}
-
 * {
   font-family: 'Open Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
+body {
+  width:calc(100vw - 16px);
+  box-sizing:border-box;
+}
 button {
   font-size: 16px;
   border-radius: 20px;
@@ -45,38 +33,30 @@ button {
   border: 1px solid #ccc;
   cursor:pointer;
 }
-
 button:hover {
   background-color: #eee;
 }
-
 button:active {
   background-color: #ddd;
 }
-
 .selected {
   background-color: #ddd;
 }
-
 #header {
   display:flex;
   flex-direction:column;
   justify-content: center;
-  align-items: center;
   margin: 1em;
 }
-
 #header h1 {
   font-weight: 500;
   margin: 0;
-  font-size:xxx-large;
 }
 
 #header h2 {
   margin: 0;
   color:#aaa;
   font-weight:lighter;
-  font-size:large;
 }
 
 #content {
@@ -125,18 +105,6 @@ button:active {
 
 .auto {
   width: auto!important;
-}
-
-.compact {
-  padding: 10px;
-}
-
-.medium {
-  padding: 15px;
-}
-
-.large {
-  padding: 35px;
 }
 
 .column > *:first-child {
@@ -246,11 +214,14 @@ background-color: #eee;
 }
 
 #chat-text {
-  width: 60vw;
+  box-sizing:border-box;
+}
+
+.input-wrapper input[type="text"] {
+  padding-right: 60px; /* Make space for the button */
 }
 
 input[type="text"] {
-  padding: 0.5em 1.5em;
   font-size: large;
   border-radius: 1em;
   border-width: 1px;
@@ -264,10 +235,6 @@ input::placeholder {
 
 .input-wrapper {
   position: relative;
-}
-
-.input-wrapper input[type="text"] {
-  padding-right: 60px; /* Make space for the button */
 }
 
 .input-wrapper button {
@@ -324,6 +291,170 @@ input::placeholder {
     opacity: 0; /* End at full transparency */
   }
 }
+
+.lds-spinner {
+  display: block;
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  top: calc(50% - 40px);
+  left: calc(50% - 40px);
+}
+.lds-spinner div {
+  transform-origin: 40px 40px;
+  animation: lds-spinner 1.2s linear infinite;
+}
+.lds-spinner div:after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 3px;
+  left: 37px;
+  width: 6px;
+  height: 18px;
+  border-radius: 20%;
+  background: #000;
+}
+.lds-spinner div:nth-child(1) {
+  transform: rotate(0deg);
+  animation-delay: -1.1s;
+}
+.lds-spinner div:nth-child(2) {
+  transform: rotate(30deg);
+  animation-delay: -1s;
+}
+.lds-spinner div:nth-child(3) {
+  transform: rotate(60deg);
+  animation-delay: -0.9s;
+}
+.lds-spinner div:nth-child(4) {
+  transform: rotate(90deg);
+  animation-delay: -0.8s;
+}
+.lds-spinner div:nth-child(5) {
+  transform: rotate(120deg);
+  animation-delay: -0.7s;
+}
+.lds-spinner div:nth-child(6) {
+  transform: rotate(150deg);
+  animation-delay: -0.6s;
+}
+.lds-spinner div:nth-child(7) {
+  transform: rotate(180deg);
+  animation-delay: -0.5s;
+}
+.lds-spinner div:nth-child(8) {
+  transform: rotate(210deg);
+  animation-delay: -0.4s;
+}
+.lds-spinner div:nth-child(9) {
+  transform: rotate(240deg);
+  animation-delay: -0.3s;
+}
+.lds-spinner div:nth-child(10) {
+  transform: rotate(270deg);
+  animation-delay: -0.2s;
+}
+.lds-spinner div:nth-child(11) {
+  transform: rotate(300deg);
+  animation-delay: -0.1s;
+}
+.lds-spinner div:nth-child(12) {
+  transform: rotate(330deg);
+  animation-delay: 0s;
+}
+@keyframes lds-spinner {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.question {
+  color: #aaa;
+  font-size: small;
+}
+@media screen and (max-width:385px) {
+  #header {
+    margin-top: 3em;
+    align-items: start;
+  }
+  #header h1 {
+    font-size:xx-large;
+  }
+  #header h2 {
+    font-size:medium;
+  }
+  .compact {
+    padding: 2px;
+  }
+  .medium {
+    padding: 5px;
+  }
+  .large {
+    padding: 10px;
+  }
+  #chat-text {
+    width: 90vw;
+  }
+  input[type="text"] {
+    padding: 0.5em 0.5em;
+  }
+}
+@media screen and (min-width:386px) and (max-width:650px) {
+  #header {
+    align-items: start;
+  }
+  #header h1 {
+    font-size:xx-large;
+  }
+  #header h2 {
+    font-size:medium;
+  }
+  .compact {
+    padding: 5px;
+  }
+  .medium {
+    padding: 10px;
+  }
+  .large {
+    padding: 20px;
+  }
+  #chat-text {
+    width: 80vw;
+  }
+  input[type="text"] {
+    padding: 0.5em 1em;
+  }
+}
+@media screen and (min-width:651px) {
+  #header {
+    align-items: center;
+  }
+  #header h1 {
+    font-size:xxx-large;
+  }
+  #header h2 {
+    font-size:large;
+  }
+  .compact {
+    padding: 10px;
+  }
+  .medium {
+    padding: 15px;
+  }
+  .large {
+    padding: 35px;
+  }
+  #chat-text {
+    width: 60vw;
+  }
+  input[type="text"] {
+    padding: 0.5em 1.5em;
+  }
+}
+
   </style>
 </head>
 
@@ -362,17 +493,31 @@ input::placeholder {
       </form>
     </div>
     <div class="column large" id="chat-box" style="display:none;">
-      <p>What do you want to know?</p>
+      <p class="question">What do you want to know?</p>
       <form id="chat-form" class="input-wrapper" onsubmit="handleChatSubmit(event);">
         <input type="text" id="chat-text" placeholder="Ask anything"/>
         <button id="chat-button" type="submit">&#9166;</button>
       </form>
+      <div id="loading-wheel" class="lds-spinner" style="display:none;">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
     </div>
     <div id="error" style="display:none;">
       <p id="error-text"></p>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="./marked.min.js"></script>
   <script>
 const controls = document.getElementById('controls');
 const generateCodeDiv = document.getElementById('generate-code');
@@ -389,6 +534,7 @@ const errorText = document.getElementById('error-text');
 const profileName = document.getElementById('profile-name');
 const chatText = document.getElementById('chat-text');
 const chatButton = document.getElementById('chat-button');
+const loadingWheel = document.getElementById('loading-wheel');
 let hideTimeout = undefined;
 function menuHideToggle(event, hide) {
   clearTimeout(hideTimeout);
@@ -451,6 +597,7 @@ async function submitCode(event) {
   });
   if (200 <= response.status && response.status < 300) {
     localStorage.setItem("dndelliscode-csrf-token", response.headers.get('x-csrf-token'));
+    csrfToken = response.headers.get('x-csrf-token');
     submitCodeDiv.style.display = 'none';
     showUi(true, phoneNumber.value);
   } else {
@@ -465,7 +612,7 @@ async function submitCode(event) {
 function showUi(shouldShow, profileNameValue) {
   const displayValue = shouldShow ? 'flex' : 'none';
   chatBox.style.display = displayValue;
-  sideBar.style.display = displayValue;
+  // sideBar.style.display = displayValue;
   controls.style.display = displayValue;
   profileName.innerText = profileNameValue;
 }
@@ -504,8 +651,10 @@ async function handleChatSubmit(event) {
   if (chatText.disabled || chatButton.disabled) {
     return;
   }
+  chatText.blur();
   chatText.disabled = true;
   chatButton.disabled = true;
+  loadingWheel.style.display = 'block';
   let response = await fetch('https://api.dnd.elliscode.com/get-completion', {
     method: "POST",
     credentials: "include",
@@ -521,9 +670,20 @@ async function handleChatSubmit(event) {
       div.classList.add('card');
       div.classList.add('column');
       div.classList.add('large');
-      div.innerHTML = marked.parse(data.message);
+      let question = document.createElement('span');
+      question.classList.add('question');
+      question.innerText = chatText.value;
+      div.appendChild(question);
+      let answer = document.createElement('div');
+      try {
+        answer.innerHTML = marked.parse(data.message);
+      } catch {
+        answer.innerText = data.message;
+      }
+      div.appendChild(answer);      
       content.insertBefore(div, chatBox.nextElementSibling);
     }
+    loadingWheel.style.display = 'none';
     chatText.disabled = false;
     chatButton.disabled = false;
   } else {

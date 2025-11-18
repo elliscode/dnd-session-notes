@@ -15,6 +15,8 @@ APP_NAME = os.environ.get("APP_NAME")
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME")
 SMS_SQS_QUEUE_URL = os.environ.get("SMS_SQS_QUEUE_URL")
 SMS_SQS_QUEUE_ARN = os.environ.get("SMS_SQS_QUEUE_ARN")
+S3_BUCKET = os.environ.get("S3_BUCKET")
+STARTING_FILE = "dnd_rag_completion.STARTING"
 
 digits = "0123456789"
 lowercase_letters = "abcdefghijklmnopqrstuvwxyz"
@@ -22,6 +24,8 @@ uppercase_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 dynamo = boto3.client("dynamodb")
 sqs = boto3.client("sqs")
 scheduler = boto3.client("scheduler")
+lambda_client = boto3.client("lambda")
+s3 = boto3.client("s3")
 
 
 def format_response(event, http_code, body, headers=None):
@@ -388,9 +392,23 @@ def create_user_data(phone):
 def create_id(length):
     return "".join(secrets.choice(digits + lowercase_letters + uppercase_letters) for i in range(length))
 
+def s3_exists(bucket, key):
+    try:
+        s3.head_object(Bucket=bucket, Key=key)
+        return True
+    except:
+        pass
+    return False
+
 
 @authenticate
 def logged_in_check_route(event, user_data, body):
+    if not s3_exists(bucket=S3_BUCKET, key=STARTING_FILE):
+        lambda_client.invoke(
+            FunctionName="dnd_rag_completion",
+            InvocationType="Event",
+            Payload=json.dumps({"body": {}})
+        )
     return format_response(
         event=event,
         http_code=200,
