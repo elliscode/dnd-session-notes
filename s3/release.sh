@@ -1,0 +1,1 @@
+aws s3 sync . s3://daniel-townsend-dnd-notes-bucket --exclude "*env.js" --exclude "release.sh" --exclude "*.DS_Store" --delete

@@ -3,11 +3,15 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Ellis Bake Shop</title>
-  <meta name="description" content="Order your macarons today! Local pickup only!">
+  <title>Legend Lore</title>
+  <meta name="description" content="Legend Lore combines campaign notes with intelligent search so you can rediscover every detail from your D&D adventures.">
   <meta name="author" content="Daniel Ellis Townsend">
   <meta name="viewport" content="width=device-width">
-  <meta name="theme-color" content="#fdf0fb">
+  <meta name="theme-color" content="#cccccc">
+  <meta property="og:title" content="Legend Lore" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dnd.elliscode.com/" />
+  <meta property="og:image" content="https://dnd.elliscode.com/icon.png" />
   <link rel="shortcut icon" type="image/jpg" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,12 +60,23 @@ button:active {
 
 #header {
   display:flex;
+  flex-direction:column;
   justify-content: center;
   align-items: center;
+  margin: 1em;
 }
 
 #header h1 {
   font-weight: 500;
+  margin: 0;
+  font-size:xxx-large;
+}
+
+#header h2 {
+  margin: 0;
+  color:#aaa;
+  font-weight:lighter;
+  font-size:large;
 }
 
 #content {
@@ -187,7 +202,7 @@ label > *:last-child {
   border: 1px solid #ccc;
   box-shadow: 5px 5px 30px #eee;
   overflow:hidden;
-  background-image: url('profile.svg');
+  /* background-image: url('profile.svg'); */
   background-size:cover;
   cursor:pointer;
 }
@@ -225,12 +240,97 @@ label > *:last-child {
 #profile-menu div:hover {
 background-color: #eee;
 }
+
+#chat-box {
+  align-items: center;
+}
+
+#chat-text {
+  width: 60vw;
+}
+
+input[type="text"] {
+  padding: 0.5em 1.5em;
+  font-size: large;
+  border-radius: 1em;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #ccc;
+}
+
+input::placeholder {
+  color:#ccc;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper input[type="text"] {
+  padding-right: 60px; /* Make space for the button */
+}
+
+.input-wrapper button {
+  position: absolute;
+  right: 5px; /* Position from the right edge */
+  top: 50%;
+  transform: translateY(-50%); /* Vertically center the button */
+  padding: 5px 10px; /* Adjust padding as needed */
+  border: none;
+  background-color: #8e8e8e;
+  color: white;
+  cursor: pointer;
+}
+
+#sidebar {
+  position:fixed;
+  left:0;
+  top:0;
+  border-right: 1px solid #eee;
+  height: 100%;
+  min-width:50px;
+}
+
+.shrunk {
+  width: 40px;
+}
+
+#error {
+  display:flex;
+  justify-content: center;
+  position:fixed;
+  top:0px;
+  left: 0px;
+  width: 100%;
+}
+
+#error-text {
+  background-color:rgb(255, 172, 172);
+  padding:2em;
+  border: 2px solid red;
+  border-radius: 1em;
+  color: rgb(139, 0, 0);
+}
+
+.fade-out-animation {
+  animation: fadeOut 3s ease-in-out forwards; /* Apply the animation */
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1; /* Start at full visibility */
+  }
+  100% {
+    opacity: 0; /* End at full transparency */
+  }
+}
   </style>
 </head>
 
 <body>
   <div id="header">
-    <h1>D&D Notes</h1>
+    <h1>Legend Lore</h1>
+    <h2>D&D Campaign notes with intelligent search</h2>
   </div>
 
   <div id="controls" class="compact" style="display:none;">
@@ -239,9 +339,11 @@ background-color: #eee;
   </div>
 
   <div id="profile-menu" style="display:none;" onmouseenter="menuHideToggle(event, false);" onmouseleave="menuHideToggle(event, true);">
-    <div>Settings</div>
-    <div>Log out</div>
+    <!-- <div>Settings</div> -->
+    <div onclick="logout(event);">Log out</div>
   </div>
+
+  <div id="sidebar" style="display:none;"></div>
 
   <div id="content">
     <div class="login" id="generate-code" style="display:none;">
@@ -255,9 +357,19 @@ background-color: #eee;
       <form onsubmit="submitCode(event);">
         <p>Please enter your login code.</p>
         <label for="phone-number-2">Phone Number: <input type="tel" name="phone-number-2" id="phone-number-2" placeholder="(XXX) XXX-XXXX" disabled></label>
-        <label for="one-time-code">One-time Code: <input type="tel" name="one-time-code" id="one-time-code" placeholder="XXX XXX"></label>
+        <label for="one-time-code">One-time Code: <input type="tel" name="one-time-code" id="one-time-code" placeholder="XXXXXX" autocomplete="off"></label>
         <button>Log In</button>
       </form>
+    </div>
+    <div class="column large" id="chat-box" style="display:none;">
+      <p>What do you want to know?</p>
+      <form id="chat-form" class="input-wrapper" onsubmit="handleChatSubmit(event);">
+        <input type="text" id="chat-text" placeholder="Ask anything"/>
+        <button id="chat-button" type="submit">&#9166;</button>
+      </form>
+    </div>
+    <div id="error" style="display:none;">
+      <p id="error-text"></p>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -267,8 +379,16 @@ const generateCodeDiv = document.getElementById('generate-code');
 const submitCodeDiv = document.getElementById('submit-code');
 const phoneNumber = document.getElementById('phone-number');
 const phoneNumber2 = document.getElementById('phone-number-2');
+const oneTimeCode = document.getElementById('one-time-code');
 const content = document.getElementById('content');
 const profileMenu = document.getElementById('profile-menu');
+const chatBox = document.getElementById('chat-box');
+const sideBar = document.getElementById('sidebar');
+const errorBox = document.getElementById('error');
+const errorText = document.getElementById('error-text');
+const profileName = document.getElementById('profile-name');
+const chatText = document.getElementById('chat-text');
+const chatButton = document.getElementById('chat-button');
 let hideTimeout = undefined;
 function menuHideToggle(event, hide) {
   clearTimeout(hideTimeout);
@@ -287,119 +407,135 @@ function toggleProfileMenu(event) {
     profileMenu.style.display = 'flex';
   }
 }
-function generateCode(event) {
-  generateCodeDiv.style.display = 'none';
-  submitCodeDiv.style.display = 'flex';
+let errorFadeTimeout = undefined;
+let errorHideTimeout = undefined;
+function displayError(text) {
+  errorText.innerText = text;
+  errorBox.style.display = 'flex';
+  errorBox.classList.remove('fade-out-animation')
+  clearTimeout(errorFadeTimeout);
+  clearTimeout(errorHideTimeout);
+  errorFadeTimeout = setTimeout(()=>{errorBox.classList.add('fade-out-animation');}, 3000);
+  errorHideTimeout = setTimeout(()=>{errorBox.style.display = 'none';}, 6000);
+}
+async function generateCode(event) {
+  event.preventDefault();
   phoneNumber2.value = phoneNumber.value;
+  let response = await fetch('https://api.dnd.elliscode.com/otp', {
+    method: "POST",
+    body: JSON.stringify({
+      phone: phoneNumber.value
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    generateCodeDiv.style.display = 'none';
+    submitCodeDiv.style.display = 'flex';
+  } else {
+    try {
+      const data = await response.json();
+      displayError(data.message);
+    } catch {
+      displayError("Error logging in, please check your phone number.");
+    }
+  }
+}
+async function submitCode(event) {
   event.preventDefault();
+  let response = await fetch('https://api.dnd.elliscode.com/login', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      phone: phoneNumber.value,
+      otp: oneTimeCode.value
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    localStorage.setItem("dndelliscode-csrf-token", response.headers.get('x-csrf-token'));
+    submitCodeDiv.style.display = 'none';
+    showUi(true, phoneNumber.value);
+  } else {
+    try {
+      const data = await response.json();
+      displayError(data.message);
+    } catch {
+      displayError("Unknown error logging in, please contact the administrator.");
+    }
+  }
 }
-function submitCode(event) {
-  submitCodeDiv.style.display = 'none';
-  controls.style.display = 'flex';
-  generateCards();
+function showUi(shouldShow, profileNameValue) {
+  const displayValue = shouldShow ? 'flex' : 'none';
+  chatBox.style.display = displayValue;
+  sideBar.style.display = displayValue;
+  controls.style.display = displayValue;
+  profileName.innerText = profileNameValue;
+}
+let csrfToken = localStorage.getItem("dndelliscode-csrf-token");
+function logout(event) {
+  csrfToken = undefined;
+  localStorage.removeItem("dndelliscode-csrf-token");
+  phoneNumber.value = '';
+  oneTimeCode.value = '';
+  showUi(false);
+  generateCodeDiv.style.display = 'flex';
+  actuallyHideMenu();
+}
+async function changeUiBasedOnLoginState() {
+  let response = await fetch('https://api.dnd.elliscode.com/logged-in-check', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      showUi(true, data.phone);
+    } catch {
+      displayError("Error parsing the response, please log in again");
+      generateCodeDiv.style.display = 'flex';
+    }
+  } else {
+    generateCodeDiv.style.display = 'flex';
+  }
+}
+async function handleChatSubmit(event) {
   event.preventDefault();
-}
-function generateCards() {
-  const json = [{date: '2025-05-27', tag: 'session', markdown: `# Lorem Ipsum Dolor Sit Amet
-
-Lorem ipsum dolor sit amet, *consectetur* adipiscing elit.  
-**Sed do eiusmod tempor incididunt** ut labore et dolore magna aliqua.
-
-## Subheading
-
-- Lorem ipsum dolor sit amet  
-- Consectetur adipiscing elit  
-- Sed do eiusmod tempor
-
-### Numbered List
-
-1. Ut enim ad minim veniam  
-2. Quis nostrud exercitation ullamco  
-3. Laboris nisi ut aliquip ex ea commodo
-
-> "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
-`}, {date: '2025-06-03', tag: 'session', markdown: `# Lorem Ipsum Dolor Sit Amet
-
-Lorem ipsum dolor sit amet, *consectetur* adipiscing elit.  
-**Sed do eiusmod tempor incididunt** ut labore et dolore magna aliqua.
-
-## Subheading
-
-- Lorem ipsum dolor sit amet  
-- Consectetur adipiscing elit  
-- Sed do eiusmod tempor
-
-### Numbered List
-
-1. Ut enim ad minim veniam  
-2. Quis nostrud exercitation ullamco  
-3. Laboris nisi ut aliquip ex ea commodo
-
-> "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."`}];
-  json.sort((a,b) => b.date.localeCompare(a.date));
-  {
-    let div = document.createElement('div');
-    div.classList.add('card');
-    div.classList.add('auto');
-    div.classList.add('medium');
-    div.classList.add('column')
-    let label = document.createElement('label');
-
-    let span = document.createElement('span');
-    span.innerText = "Campaign: ";
-    label.appendChild(span);
-
-    let select = document.createElement('select');
-    let option = document.createElement('option');
-    option.innerText = 'Eberron';
-    option.value = option.innerText;
-    select.appendChild(option);
-
-    label.appendChild(select);
-    div.appendChild(label);
-    content.appendChild(div);
+  if (chatText.disabled || chatButton.disabled) {
+    return;
   }
-  {
-    let div = document.createElement('div');
-    div.classList.add('card');
-    div.classList.add('auto');
-    div.classList.add('medium');
-    div.classList.add('row');
-
+  chatText.disabled = true;
+  chatButton.disabled = true;
+  let response = await fetch('https://api.dnd.elliscode.com/get-completion', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      query: chatText.value
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
     {
-      let button = document.createElement('button');
-      button.innerText = 'All';
-      button.classList.add('selected');
-      div.appendChild(button);
+      const data = await response.json();
+      let div = document.createElement('div');
+      div.classList.add('card');
+      div.classList.add('column');
+      div.classList.add('large');
+      div.innerHTML = marked.parse(data.message);
+      content.insertBefore(div, chatBox.nextElementSibling);
     }
-    {
-      let button = document.createElement('button');
-      button.innerText = 'Characters';
-      div.appendChild(button);
+    chatText.disabled = false;
+    chatButton.disabled = false;
+  } else {
+    try {
+      const data = await response.json();
+      displayError(data.message);
+    } catch {
+      displayError("Unknown error logging in, please contact the administrator.");
     }
-    {
-      let button = document.createElement('button');
-      button.innerText = 'Sessions';
-      div.appendChild(button);
-    }
-    {
-      let button = document.createElement('button');
-      button.innerText = 'Places';
-      div.appendChild(button);
-    }
-    content.appendChild(div);
-  }
-  for (let entry of json) {
-    let div = document.createElement('div');
-    div.classList.add('card');
-    div.classList.add('column');
-    div.classList.add('large');
-    div.innerHTML = marked.parse(entry.markdown);
-    content.appendChild(div);
   }
 }
-
-generateCodeDiv.style.display = 'flex';
+changeUiBasedOnLoginState();
   </script>
 
 </body>

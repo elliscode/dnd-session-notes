@@ -236,7 +236,10 @@ def login_route(event):
     return format_response(
         event=event,
         http_code=200,
-        body="successfully logged in",
+        body={
+            "message": "successfully logged in",
+            "phone": phone,
+        },
         headers={
             "x-csrf-token": token_data["csrf"],
             "Set-Cookie": f'{APP_NAME}-auth-token={token_data["key2"]}; Domain=.dnd.elliscode.com; Expires={date_string}; Secure; HttpOnly',
@@ -391,7 +394,10 @@ def logged_in_check_route(event, user_data, body):
     return format_response(
         event=event,
         http_code=200,
-        body="You are logged in",
+        body={
+            "message": "You are logged in",
+            "phone": user_data["key2"],
+        },
     )
 
 

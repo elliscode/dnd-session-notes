@@ -1,28 +1,24 @@
 import json
 import traceback
-import glob
-import hashlib
-from pathlib import Path
 from openai import OpenAI
 import chromadb
 from chromadb.utils import embedding_functions
-from chromadb.config import Settings
-from tiktoken import get_encoding
 import boto3
 import zipfile
 import os
-import shutil
 
-def zip_directory(folder, zip_path):
-    """
-    Create a ZIP file from a folder.
-    Result: zip_path (e.g., /tmp/chroma.zip)
-    """
-    # zip_path must not end in .zip for make_archive base_name
-    base = zip_path.replace(".zip", "")
-    shutil.make_archive(base, 'zip', folder)
-    print(f"Zipped {folder} → {zip_path}")
-    return zip_path
+STARTING_FILE = "dnd_rag_completion.STARTING"
+
+s3 = boto3.client("s3")
+
+S3_BUCKET = os.environ.get("S3_BUCKET")
+
+s3.upload_file(Bucket=S3_BUCKET, Key=STARTING_FILE)
+
+DATA_FOLDER = "/tmp/session-notes"
+CHROMA_PATH = "/tmp/chroma_data"
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 def unzip_file(zip_path, extract_to):
     """
@@ -35,8 +31,6 @@ def unzip_file(zip_path, extract_to):
         zip_ref.extractall(extract_to)
 
     print(f"Unzipped {zip_path} → {extract_to}")
-
-s3 = boto3.client("s3")
 
 def download_s3_directory(bucket, prefix, local_path="/tmp"):
     """
@@ -65,15 +59,9 @@ def download_s3_directory(bucket, prefix, local_path="/tmp"):
             s3.download_file(bucket, key, local_file_path)
             print(f"Downloaded: s3://{bucket}/{key} → {local_file_path}")
 
-
-DATA_FOLDER = "/tmp/session-notes"          # folder containing your .md files
-CHROMA_PATH = "/tmp/chroma_data"       # persistent ChromaDB directory
-
-download_s3_directory("daniel-townsend-dnd-notes-userspace", "session-notes/", DATA_FOLDER)
-s3.download_file("daniel-townsend-dnd-notes-userspace", "chromadb.zip", "/tmp/chromadb.zip")
+download_s3_directory(S3_BUCKET, "session-notes/", DATA_FOLDER)
+s3.download_file(S3_BUCKET, "chromadb.zip", "/tmp/chromadb.zip")
 unzip_file("/tmp/chromadb.zip", CHROMA_PATH)
-
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # This is where I would copy files from S3 to my /tmp/chroma_data directory
 COLLECTION_NAME = "dnd_sessions"
@@ -92,22 +80,7 @@ collection = chroma_client.get_or_create_collection(
     embedding_function=embed_fn,
 )
 
-# Helper to chunk text
-def chunk_text(text, chunk_size=300, overlap=75):
-    tokens = get_encoding("cl100k_base").encode(text)
-    chunks = []
-    start = 0
-    while start < len(tokens):
-        end = min(start + chunk_size, len(tokens))
-        chunk = get_encoding("cl100k_base").decode(tokens[start:end])
-        chunks.append(chunk)
-        start += chunk_size - overlap
-    return chunks
-
-# Compute a stable hash for each file (for deduplication)
-def file_hash(path):
-    with open(path, "rb") as f:
-        return hashlib.md5(f.read()).hexdigest()
+s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
 
 def lambda_handler(event, context):
     try:
@@ -121,6 +94,9 @@ def lambda_handler(event, context):
             body = json.loads(event['body'])
 
         query = body['query']
+
+        if query is None:
+            return {"statusCode": 201, "body": "Successful ping, lambda is now warm"}
 
         # Search top 5 relevant chunks
         results = collection.query(

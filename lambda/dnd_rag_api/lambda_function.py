@@ -15,6 +15,7 @@ from dnd_rag_api.notes import (
     set_embedding,
     set_note,
     get_note,
+    get_completion_route,
 )
 
 
@@ -52,6 +53,8 @@ def route(event):
         return set_note(event)
     if path_equals(event=event, method="POST", path="/get-note"):
         return get_note(event)
+    if path_equals(event=event, method="POST", path="/get-completion"):
+        return get_completion_route(event)
     if path_equals(event=event, method="POST", path="/ping"):
         return format_response(
             event=event,

@@ -6,12 +6,24 @@ from pathlib import Path
 from openai import OpenAI
 import chromadb
 from chromadb.utils import embedding_functions
-from chromadb.config import Settings
 from tiktoken import get_encoding
 import boto3
 import zipfile
 import os
 import shutil
+
+STARTING_FILE = "dnd_rag_ingest.STARTING"
+
+s3 = boto3.client("s3")
+
+S3_BUCKET = os.environ.get("S3_BUCKET")
+
+s3.upload_file(Bucket=S3_BUCKET, Key=STARTING_FILE)
+
+DATA_FOLDER = "/tmp/session-notes"
+CHROMA_PATH = "/tmp/chroma_data"
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 def zip_directory(folder, zip_path):
     """
@@ -65,15 +77,9 @@ def download_s3_directory(bucket, prefix, local_path="/tmp"):
             s3.download_file(bucket, key, local_file_path)
             print(f"Downloaded: s3://{bucket}/{key} → {local_file_path}")
 
-
-DATA_FOLDER = "/tmp/session-notes"          # folder containing your .md files
-CHROMA_PATH = "/tmp/chroma_data"       # persistent ChromaDB directory
-
-download_s3_directory("daniel-townsend-dnd-notes-userspace", "session-notes/", DATA_FOLDER)
-s3.download_file("daniel-townsend-dnd-notes-userspace", "chromadb.zip", "/tmp/chromadb.zip")
+download_s3_directory(S3_BUCKET, "session-notes/", DATA_FOLDER)
+s3.download_file(S3_BUCKET, "chromadb.zip", "/tmp/chromadb.zip")
 unzip_file("/tmp/chromadb.zip", CHROMA_PATH)
-
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # This is where I would copy files from S3 to my /tmp/chroma_data directory
 COLLECTION_NAME = "dnd_sessions"
@@ -91,6 +97,8 @@ collection = chroma_client.get_or_create_collection(
     name=COLLECTION_NAME,
     embedding_function=embed_fn,
 )
+
+s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
 
 # Helper to chunk text
 def chunk_text(text, chunk_size=300, overlap=75):
@@ -171,7 +179,7 @@ def lambda_handler(event, context):
         zip_directory("/tmp/chroma_data", zip_file)
 
         # Step 3 — Upload the ZIP back to S3
-        s3.upload_file(zip_file, "daniel-townsend-dnd-notes-userspace", "chromadb.zip")
+        s3.upload_file(zip_file, S3_BUCKET, "chromadb.zip")
         print(f"Uploaded {zip_file} → s3://daniel-townsend-dnd-notes-userspace/chromadb.zip")
 
         return {"statusCode": 200, "body": f"Updated the chromadb files and changed the environment variable in the dnd_rag_api, you should be good to go now"}
