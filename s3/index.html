@@ -7,11 +7,11 @@
   <meta name="description" content="Legend Lore combines campaign notes with intelligent search so you can rediscover every detail from your D&D adventures.">
   <meta name="author" content="Daniel Ellis Townsend">
   <meta name="viewport" content="width=device-width">
-  <meta name="theme-color" content="#cccccc">
+  <meta name="theme-color" content="#121214">
   <meta property="og:title" content="Legend Lore" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dnd.elliscode.com/" />
-  <meta property="og:image" content="https://dnd.elliscode.com/icon.png" />
+  <meta property="og:image" content="https://dnd.elliscode.com/favicon.png" />
   <link rel="shortcut icon" type="image/jpg" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,6 @@ button {
   border-radius: 20px;
   padding: 5px 15px;
   background-color: #ffffff00;
-  border: 1px solid #ccc;
   cursor:pointer;
 }
 button:hover {
@@ -55,7 +54,6 @@ button:active {
 
 #header h2 {
   margin: 0;
-  color:#aaa;
   font-weight:lighter;
 }
 
@@ -76,7 +74,6 @@ button:active {
 
 .login {
   display:flex;
-  width: 350px;
 }
 
 .column {
@@ -94,11 +91,8 @@ button:active {
   margin: 40px;
   box-sizing: border-box;
 }
-
 .login, .card {
-  border: 1px solid #ccc;
   padding: 40px;
-  box-shadow: 5px 5px 30px #eee;
   border-radius: 20px;
   margin: 20px 40px;
 }
@@ -146,7 +140,6 @@ label > *:last-child {
   border-radius: 20px;
   padding: 5px;
   text-align:center;
-  border: 1px solid #ccc;
 }
 
 #controls {
@@ -162,13 +155,12 @@ label > *:last-child {
   font-weight: 500;
 }
 
+
+
 #profile-icon {
   width: 50px;
   height: 50px;
-  background-color:white;
   border-radius: 50px;
-  border: 1px solid #ccc;
-  box-shadow: 5px 5px 30px #eee;
   overflow:hidden;
   /* background-image: url('profile.svg'); */
   background-size:cover;
@@ -195,18 +187,12 @@ label > *:last-child {
 }
 
 #profile-menu div {
-  border: 1px solid #ccc;
   border-bottom-width:0px;
   padding: 10px 20px;
-  background-color: white;
 }
 
 #profile-menu div:last-child {
   border-bottom-width:1px;
-}
-
-#profile-menu div:hover {
-background-color: #eee;
 }
 
 #chat-box {
@@ -221,16 +207,12 @@ background-color: #eee;
   padding-right: 60px; /* Make space for the button */
 }
 
-input[type="text"] {
+input {
   font-size: large;
   border-radius: 1em;
   border-width: 1px;
   border-style: solid;
   border-color: #ccc;
-}
-
-input::placeholder {
-  color:#ccc;
 }
 
 .input-wrapper {
@@ -313,7 +295,6 @@ input::placeholder {
   width: 6px;
   height: 18px;
   border-radius: 20%;
-  background: #000;
 }
 .lds-spinner div:nth-child(1) {
   transform: rotate(0deg);
@@ -401,6 +382,14 @@ input::placeholder {
   input[type="text"] {
     padding: 0.5em 0.5em;
   }
+  .login {
+    width: 230px;
+    box-sizing:border-box;
+  }
+  label {
+    display:flex;
+    flex-direction:column;
+  }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
   #header {
@@ -426,6 +415,9 @@ input::placeholder {
   }
   input[type="text"] {
     padding: 0.5em 1em;
+  }
+  .login {
+    width: 300px;
   }
 }
 @media screen and (min-width:651px) {
@@ -453,12 +445,113 @@ input::placeholder {
   input[type="text"] {
     padding: 0.5em 1.5em;
   }
+  .login {
+    width: 350px;
+  }
 }
-
+body.dark {
+  background-color:#1a1a1e;
+}
+.dark h1 {
+  color: #ccc;
+}
+h2 {
+  color:#aaa;
+}
+.dark h2 {
+  color: #666;
+}
+.dark .question {
+  color:#666;
+}
+.dark input {
+  color:#ccc;
+  background-color:#121214;
+}
+input::placeholder {
+  color:#ccc;
+}
+.dark input::placeholder {
+  color:#666;
+}
+button, .login, .card {
+  border: 1px solid #ccc;
+}
+#profile-icon {
+  border: 1px solid #ccc;
+  box-shadow: 5px 5px 30px #eee;
+  background-color:white;
+}
+#profile-menu div {
+  border: 1px solid #ccc;
+  background-color: white;
+}
+#profile-menu div:hover {
+  background-color: #eee;
+}
+.dark button, .dark .login, .dark .card {
+  border: 1px solid #666;
+}
+.dark #profile-icon {
+  border: 1px solid #666;
+  box-shadow: 5px 5px 30px #333;
+  background-color:#121214;
+}
+.dark #profile-menu div {
+  border: 1px solid #666;
+  background-color: #121214;
+  color: #ccc;
+}
+.dark #profile-name {
+  color: #ccc;
+}
+.login, .card {
+  box-shadow: 5px 5px 30px #eee;
+}
+.dark button {
+  background-color:#121214;
+  color: #ccc;
+}
+.dark .login, .dark .card {
+  box-shadow: 5px 5px 30px #333;
+  background-color:#121214;
+  color: #ccc;
+}
+#color-mode {
+  position:fixed;
+  top:2px;
+  left:2px;
+}
+#color-mode span {
+  cursor:pointer;
+  line-height:1;
+}
+#light {
+  display: none;
+}
+#dark {
+  display: block;
+}
+.dark #light {
+  display: block;
+}
+.dark #dark {
+  display: none;
+}
+.lds-spinner div:after {
+  background-color:#121214;
+}
+.dark .lds-spinner div:after {
+  background-color:#666;
+}
   </style>
 </head>
 
-<body>
+<body class="dark">
+  <div id="color-mode">
+    <span id="light" onclick="switchMode(event);">&#9728;&#65039;</span>
+    <span id="dark" onclick="switchMode(event);">&#127765;</span>
+  </div>
   <div id="header">
     <h1>Legend Lore</h1>
     <h2>D&D Campaign notes with intelligent search</h2>
@@ -496,7 +589,7 @@ input::placeholder {
       <p class="question">What do you want to know?</p>
       <form id="chat-form" class="input-wrapper" onsubmit="handleChatSubmit(event);">
         <input type="text" id="chat-text" placeholder="Ask anything"/>
-        <button id="chat-button" type="submit">&#9166;</button>
+        <button id="chat-button" type="submit">&#8629;</button>
       </form>
       <div id="loading-wheel" class="lds-spinner" style="display:none;">
         <div></div>
@@ -535,6 +628,9 @@ const profileName = document.getElementById('profile-name');
 const chatText = document.getElementById('chat-text');
 const chatButton = document.getElementById('chat-button');
 const loadingWheel = document.getElementById('loading-wheel');
+const lightButton = document.getElementById('light');
+const darkButton = document.getElementById('dark');
+const metaThemeColor = document.querySelector('meta[name="theme-color"]');
 let hideTimeout = undefined;
 function menuHideToggle(event, hide) {
   clearTimeout(hideTimeout);
@@ -693,6 +789,15 @@ async function handleChatSubmit(event) {
     } catch {
       displayError("Unknown error logging in, please contact the administrator.");
     }
+  }
+}
+function switchMode(event) {
+  if (event.target == lightButton) {
+    document.body.classList.remove('dark');
+    metaThemeColor.setAttribute('content', "#cccccc");
+  } else {
+    document.body.classList.add('dark');
+    metaThemeColor.setAttribute('content', "#121214");
   }
 }
 changeUiBasedOnLoginState();
