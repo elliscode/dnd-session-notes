@@ -12,9 +12,7 @@ from dnd_rag_api.utils import (
 )
 
 from dnd_rag_api.notes import (
-    set_embedding,
-    set_note,
-    get_note,
+    get_notes_list_route,
     get_completion_route,
 )
 
@@ -47,14 +45,10 @@ def route(event):
         return logged_in_check_route(event)
     if path_equals(event=event, method="POST", path="/ios-cookie-refresh"):
         return ios_cookie_refresh_route(event)
-    if path_equals(event=event, method="POST", path="/set-embedding"):
-        return set_embedding(event)
-    if path_equals(event=event, method="POST", path="/set-note"):
-        return set_note(event)
-    if path_equals(event=event, method="POST", path="/get-note"):
-        return get_note(event)
     if path_equals(event=event, method="POST", path="/get-completion"):
         return get_completion_route(event)
+    if path_equals(event=event, method="POST", path="/get-notes-list"):
+        return get_notes_list_route(event)
     if path_equals(event=event, method="POST", path="/ping"):
         return format_response(
             event=event,
