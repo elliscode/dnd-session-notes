@@ -747,6 +747,10 @@ async function handleChatSubmit(event) {
   if (chatText.disabled || chatButton.disabled) {
     return;
   }
+  if (chatText.value.trim().length == 0) {
+      displayError("Please enter some text before pressing Submit");
+      return;
+  }
   chatText.blur();
   chatText.disabled = true;
   chatButton.disabled = true;
