@@ -14,6 +14,7 @@ from dnd_rag_api.utils import (
 from dnd_rag_api.notes import (
     get_notes_list_route,
     get_completion_route,
+    get_previous_queries_route,
 )
 
 
@@ -49,6 +50,8 @@ def route(event):
         return get_completion_route(event)
     if path_equals(event=event, method="POST", path="/get-notes-list"):
         return get_notes_list_route(event)
+    if path_equals(event=event, method="POST", path="/get-previous-queries"):
+        return get_previous_queries_route(event)
     if path_equals(event=event, method="POST", path="/ping"):
         return format_response(
             event=event,

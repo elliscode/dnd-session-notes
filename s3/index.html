@@ -734,12 +734,34 @@ async function changeUiBasedOnLoginState() {
     try {
       const data = await response.json();
       showUi(true, data.phone);
+      loadPreviousQueries();
     } catch {
       displayError("Error parsing the response, please log in again");
       generateCodeDiv.style.display = 'flex';
     }
   } else {
     generateCodeDiv.style.display = 'flex';
+  }
+}
+async function loadPreviousQueries() {
+  let response = await fetch('https://api.dnd.elliscode.com/get-previous-queries', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      for (let item of data) {
+        appendCard(item.query, item.response);
+      }
+    } catch {
+      displayError("Failed to get previous queries");
+    }
+  } else {
+    displayError("Failed to get previous queries");
   }
 }
 async function handleChatSubmit(event) {
@@ -764,26 +786,10 @@ async function handleChatSubmit(event) {
     })
   });
   if (200 <= response.status && response.status < 300) {
-    {
-      const data = await response.json();
-      let div = document.createElement('div');
-      div.classList.add('card');
-      div.classList.add('column');
-      div.classList.add('large');
-      let question = document.createElement('span');
-      question.classList.add('question');
-      question.innerText = chatText.value;
-      div.appendChild(question);
-      let answer = document.createElement('div');
-      try {
-        answer.innerHTML = marked.parse(data.message);
-      } catch {
-        answer.innerText = data.message;
-      }
-      div.appendChild(answer);      
-      content.insertBefore(div, chatBox.nextElementSibling);
-    }
+    const data = await response.json();
+    appendCard(data.query, data.response);
     loadingWheel.style.display = 'none';
+    chatText.value = '';
     chatText.disabled = false;
     chatButton.disabled = false;
   } else {
@@ -793,6 +799,26 @@ async function handleChatSubmit(event) {
     } catch {
       displayError("Unknown error logging in, please contact the administrator.");
     }
+  }
+}
+function appendCard(question, answer) {
+  {
+    let div = document.createElement('div');
+    div.classList.add('card');
+    div.classList.add('column');
+    div.classList.add('large');
+    let questionDiv = document.createElement('span');
+    questionDiv.classList.add('question');
+    questionDiv.innerText = question;
+    div.appendChild(questionDiv);
+    let answerDiv = document.createElement('div');
+    try {
+      answerDiv.innerHTML = marked.parse(answer);
+    } catch {
+      answerDiv.innerText = answer;
+    }
+    div.appendChild(answerDiv);      
+    content.insertBefore(div, chatBox.nextElementSibling);
   }
 }
 function switchMode(event) {
