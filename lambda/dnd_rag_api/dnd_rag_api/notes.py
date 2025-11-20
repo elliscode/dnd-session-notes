@@ -15,17 +15,24 @@ from .utils import (
 
 @authenticate
 def get_completion_route(event, user_data, body):
-    resp = lambda_client.invoke(
-        FunctionName="dnd_rag_completion",
-        InvocationType="RequestResponse",
-        Payload=json.dumps({"body": {"query": body["query"]}})
-    )
-    response_body = json.loads(resp["Payload"].read().decode())
-    print(f'User: {user_data["key2"]} -- Query: {body["query"]} -- Response: {response_body["body"]}')
+    status_code = 500
+    response_text = "Failed to fetch completion, pleasse try again later"
+    try:
+        resp = lambda_client.invoke(
+            FunctionName="dnd_rag_completion",
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"body": {"query": body["query"]}})
+        )
+        response_body = json.loads(resp["Payload"].read().decode())
+        print(f'User: {user_data["key2"]} -- Query: {body["query"]} -- Response: {response_body["body"]}')
+        status_code = response_body["statusCode"]
+        response_text = response_body["body"]
+    except:
+        pass
     return format_response(
         event=event,
-        http_code=response_body["statusCode"],
-        body=response_body["body"],
+        http_code=status_code,
+        body=response_text,
     )
 
 

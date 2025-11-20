@@ -18,12 +18,14 @@ s3 = boto3.client("s3")
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
 
-s3.put_object(Bucket=S3_BUCKET, Key=STARTING_FILE, Body=b"")
-
 DATA_FOLDER = "/tmp/session-notes"
 CHROMA_PATH = "/tmp/chroma_data"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+# This is where I would copy files from S3 to my /tmp/chroma_data directory
+COLLECTION_NAME = "dnd_sessions"
+EMBED_MODEL = "text-embedding-3-small"  # low-cost, high-quality model
 
 def zip_directory(folder, zip_path):
     """
@@ -47,8 +49,6 @@ def unzip_file(zip_path, extract_to):
         zip_ref.extractall(extract_to)
 
     print(f"Unzipped {zip_path} → {extract_to}")
-
-s3 = boto3.client("s3")
 
 def download_s3_directory(bucket, prefix, local_path="/tmp"):
     """
@@ -77,28 +77,29 @@ def download_s3_directory(bucket, prefix, local_path="/tmp"):
             s3.download_file(bucket, key, local_file_path)
             print(f"Downloaded: s3://{bucket}/{key} → {local_file_path}")
 
-download_s3_directory(S3_BUCKET, "session-notes/", DATA_FOLDER)
-s3.download_file(S3_BUCKET, "chromadb.zip", "/tmp/chromadb.zip")
-unzip_file("/tmp/chromadb.zip", CHROMA_PATH)
+def init():
+    print("Initializing...")
+    s3.put_object(Bucket=S3_BUCKET, Key=STARTING_FILE, Body=b"")
 
-# This is where I would copy files from S3 to my /tmp/chroma_data directory
-COLLECTION_NAME = "dnd_sessions"
-EMBED_MODEL = "text-embedding-3-small"  # low-cost, high-quality model
+    download_s3_directory(S3_BUCKET, "session-notes/", DATA_FOLDER)
+    s3.download_file(S3_BUCKET, "chromadb.zip", "/tmp/chromadb.zip")
+    unzip_file("/tmp/chromadb.zip", CHROMA_PATH)
 
-# Initialize clients
-client = OpenAI(api_key=OPENAI_API_KEY)
-chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-embed_fn = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=OPENAI_API_KEY,
-    model_name=EMBED_MODEL,
-)
+    # Initialize clients
+    chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+    embed_fn = embedding_functions.OpenAIEmbeddingFunction(
+        api_key=OPENAI_API_KEY,
+        model_name=EMBED_MODEL,
+    )
 
-collection = chroma_client.get_or_create_collection(
-    name=COLLECTION_NAME,
-    embedding_function=embed_fn,
-)
+    collection = chroma_client.get_or_create_collection(
+        name=COLLECTION_NAME,
+        embedding_function=embed_fn,
+    )
 
-s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
+    s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
+
+    return collection
 
 # Helper to chunk text
 def chunk_text(text, chunk_size=300, overlap=75):
@@ -121,6 +122,7 @@ def lambda_handler(event, context):
     try:
         print(json.dumps(event))
         print(context)
+        collection = init()
 
         # Load existing IDs to avoid re-uploading
         existing_docs = {m["file_id"]: m for m in collection.get()["metadatas"]} if collection.count() > 0 else {}
