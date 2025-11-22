@@ -201,6 +201,7 @@ label > *:last-child {
   padding-right:20px;
   cursor: pointer;
   user-select: none;
+  z-index:10;
 }
 
 #profile-menu div {
@@ -288,11 +289,8 @@ input {
 
 .lds-spinner {
   display: block;
-  position: absolute;
   width: 80px;
   height: 80px;
-  top: calc(50% - 40px);
-  left: calc(50% - 40px);
 }
 .lds-spinner div {
   transform-origin: 40px 40px;
@@ -449,6 +447,9 @@ input {
   #notes-panel:has(.close) #notes-list {
     display: none;
   }
+  .lds-spinner {
+    margin-top: 10px;
+  }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
   #header {
@@ -510,6 +511,9 @@ input {
   }
   #notes-panel:has(.close) #notes-list {
     display: none;
+  }
+  .lds-spinner {
+    margin-top: 20px;
   }
 }
 @media screen and (min-width:651px) {
@@ -584,6 +588,9 @@ input {
   #note-content {
     overflow-y: scroll;
     height: 100%;
+  }
+  .lds-spinner {
+    margin-top: 35px;
   }
 }
 body.dark {
@@ -914,6 +921,9 @@ function logout(event) {
   oneTimeCode.value = '';
   showUi(false);
   generateCodeDiv.style.display = 'flex';
+  Array.from(document.getElementsByClassName('card')).forEach(x=>x.remove());
+  Array.from(document.querySelectorAll(`div[filename]`)).forEach(x=>x.remove());
+  removeContent();
   actuallyHideMenu();
 }
 async function changeUiBasedOnLoginState() {
