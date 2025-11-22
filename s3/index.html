@@ -75,18 +75,6 @@ button:active {
   flex-direction: row;
 }
 
-#notes-list {
-  display:flex;
-  flex-direction:column;
-  overflow-y: scroll;
-  height: 100%;
-}
-
-#note-content {
-  overflow-y: scroll;
-  height: 100%;
-}
-
 #notes-list > div {
   padding: 0.5em 1em;
   font-family: monospace;
@@ -455,8 +443,11 @@ input {
   #note-content .close {
     display:block;
     position: fixed;
-    top: 5px;
+    top: 55px;
     right: 5px;
+  }
+  #notes-panel:has(.close) #notes-list {
+    display: none;
   }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
@@ -516,6 +507,9 @@ input {
     position: fixed;
     top: 5px;
     right: 5px;
+  }
+  #notes-panel:has(.close) #notes-list {
+    display: none;
   }
 }
 @media screen and (min-width:651px) {
@@ -580,6 +574,16 @@ input {
   }
   #note-content .close {
     display:none;
+  }
+  #notes-list {
+    display:flex;
+    flex-direction:column;
+    overflow-y: scroll;
+    height: 100%;
+  }
+  #note-content {
+    overflow-y: scroll;
+    height: 100%;
   }
 }
 body.dark {
