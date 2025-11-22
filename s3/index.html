@@ -1001,8 +1001,10 @@ async function loadNote(event) {
     try {
       const data = await response.json();
       try {
+        Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
         noteContent.innerHTML = marked.parse(data.content, { breaks: true });
         noteContent.appendChild(generateCloseButton());
+        event.target.classList.add('selected');
       } catch {
         console.log(data.content);
       }
@@ -1021,6 +1023,7 @@ function generateCloseButton() {
   return button;
 }
 function removeContent() {
+  Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
   noteContent.innerHTML = '';
 }
 async function handleChatSubmit(event) {
