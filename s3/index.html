@@ -22,8 +22,7 @@
   font-family: 'Open Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 body {
-  width:calc(100vw - 16px);
-  box-sizing:border-box;
+  margin: 0;
 }
 button {
   font-size: 16px;
@@ -57,14 +56,45 @@ button:active {
   font-weight:lighter;
 }
 
-#content {
+#chat-panel, #notes-panel {
   display:flex;
-  flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
-#content > * {
+#chat-panel {
+  flex-direction: column;
+}
+
+#chat-panel > *, #notes-panel > * {
   margin-top:0px;
+}
+
+#notes-panel {
+  align-items: flex-start;
+  flex-direction: row;
+}
+
+#notes-list {
+  display:flex;
+  flex-direction:column;
+  overflow-y: scroll;
+  height: 100%;
+}
+
+#note-content {
+  overflow-y: scroll;
+  height: 100%;
+}
+
+#notes-list > div {
+  padding: 0.5em 1em;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+#header {
+  margin-top: 1em;
 }
 
 .row  {
@@ -145,7 +175,6 @@ label > *:last-child {
 #controls {
   display:flex;
   position:absolute;
-  top:0px;
   right:0px;
   align-items: center;
 }
@@ -230,14 +259,8 @@ input {
   color: white;
   cursor: pointer;
 }
-
-#sidebar {
-  position:fixed;
-  left:0;
-  top:0;
-  border-right: 1px solid #eee;
-  height: 100%;
-  min-width:50px;
+.input-wrapper button:hover {
+  background-color: #5d5d5d;
 }
 
 .shrunk {
@@ -251,6 +274,7 @@ input {
   top:0px;
   left: 0px;
   width: 100%;
+  pointer-events:none;
 }
 
 #error-text {
@@ -356,6 +380,20 @@ input {
   color: #aaa;
   font-size: small;
 }
+#sidebar {
+  overflow: hidden;
+}
+#sidebar > * {
+  padding: 5px;
+  width:fit-content;
+  height:fit-content;
+}
+#color-mode span img {
+  pointer-events:none;
+}
+#sidebar .panel-button span {
+  pointer-events:none;
+}
 @media screen and (max-width:385px) {
   #header {
     margin-top: 3em;
@@ -377,7 +415,7 @@ input {
     padding: 10px;
   }
   #chat-text {
-    width: 90vw;
+    width: calc(100%);
   }
   input[type="text"] {
     padding: 0.5em 0.5em;
@@ -389,6 +427,36 @@ input {
   label {
     display:flex;
     flex-direction:column;
+  }
+  #sidebar {
+    position:relative;
+    height: 50px;
+    width:100%;
+    align-items: center;
+  }
+  #sidebar {
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #ccc;
+  }
+  .dark #sidebar {
+    background-color: #121214;
+    border-bottom: 1px solid #666;
+  }
+  #notes-panel {
+    height: calc(100vh - 50px);
+  }
+  #notes-list {
+    width: 100%;
+  }
+  #note-content {
+    position: absolute;
+    margin: 0px 5px;
+  }
+  #note-content .close {
+    display:block;
+    position: fixed;
+    top: 5px;
+    right: 5px;
   }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
@@ -419,6 +487,36 @@ input {
   .login {
     width: 300px;
   }
+  #sidebar {
+    position:relative;
+    height: 50px;
+    width:100%;
+    align-items: center;
+  }
+  #sidebar {
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #ccc;
+  }
+  .dark #sidebar {
+    background-color: #121214;
+    border-bottom: 1px solid #666;
+  }
+  #notes-panel {
+    height: calc(100vh - 50px);
+  }
+  #notes-list {
+    width: 100%;
+  }
+  #note-content {
+    position: absolute;
+    margin: 0px 10px;
+  }
+  #note-content .close {
+    display:block;
+    position: fixed;
+    top: 5px;
+    right: 5px;
+  }
 }
 @media screen and (min-width:651px) {
   #header {
@@ -447,6 +545,41 @@ input {
   }
   .login {
     width: 350px;
+  }
+  #sidebar {
+    position:fixed;
+    left:0;
+    top:0;
+    height: 100%;
+    width:50px;
+    justify-content:flex-start;
+    flex-direction: column;
+  }
+  #chat-panel, #notes-panel {
+    margin-left: 50px;
+    width: calc(100% - 50px);
+  }
+  #sidebar {
+    background-color: #f8f8f8;
+    border-right: 1px solid #eee;
+  }
+  .dark #sidebar {
+    background-color: #121214;
+    border-right: 1px solid #333;
+  }
+  #notes-panel {
+    height: calc(100vh);
+  }
+  #notes-list {
+    min-width: 300px;
+    max-width: 300px;
+  }
+  #note-content {
+    position: relative;
+    margin: 0px 15px;
+  }
+  #note-content .close {
+    display:none;
   }
 }
 body.dark {
@@ -512,17 +645,21 @@ button, .login, .card {
   background-color:#121214;
   color: #ccc;
 }
+.dark button:hover {
+  background-color:#35353a;
+}
+.dark #profile-menu div:hover {
+  background-color: #35353a;
+}
 .dark .login, .dark .card {
   box-shadow: 5px 5px 30px #333;
   background-color:#121214;
   color: #ccc;
 }
 #color-mode {
-  position:fixed;
-  top:2px;
-  left:2px;
+  user-select: none;
 }
-#color-mode span {
+#sidebar span {
   cursor:pointer;
   line-height:1;
 }
@@ -544,32 +681,75 @@ button, .login, .card {
 .dark .lds-spinner div:after {
   background-color:#666;
 }
+.selected {
+  background-color: #ddd;
+}
+.dark .selected {
+  background-color: #444;
+}
+
+#notes-list > div {
+  color: black;
+  border: 1px solid #eee;
+  border-bottom:none;
+}
+
+#notes-list > div:hover {
+  background-color:#eee;
+}
+
+.dark #notes-list > div {
+  color: white;
+  border: 1px solid #333;
+  border-bottom:none;
+}
+
+.dark #notes-list > div:hover {
+  background-color:#333;
+}
+
+
+#note-content {
+  color: black;
+  background-color: white;
+}
+
+.dark #note-content {
+  color: white;
+  background-color: #1a1a1e;
+}
   </style>
 </head>
 
 <body class="dark">
-  <div id="color-mode">
-    <span id="light" onclick="switchMode(event);">&#9728;&#65039;</span>
-    <span id="dark" onclick="switchMode(event);">&#127765;</span>
-  </div>
-  <div id="header">
-    <h1>Legend Lore</h1>
-    <h2>D&D Campaign notes with intelligent search</h2>
-  </div>
-
-  <div id="controls" class="compact" style="display:none;">
-    <span id="profile-name">Ellis</span>
-    <div id="profile-icon" onclick="toggleProfileMenu(event);"></div>
-  </div>
 
   <div id="profile-menu" style="display:none;" onmouseenter="menuHideToggle(event, false);" onmouseleave="menuHideToggle(event, true);">
     <!-- <div>Settings</div> -->
     <div onclick="logout(event);">Log out</div>
   </div>
 
-  <div id="sidebar" style="display:none;"></div>
+  <div id="sidebar" style="display:none;">
+    <div id="color-mode">
+      <span id="light" onclick="switchMode(event);"><img src="sun.png"/></span>
+      <span id="dark" onclick="switchMode(event);"><img src="moon.png"/></span>
+    </div>
+    <div for="chat-panel" class="panel-button selected" id="chat-nav" onclick="switchPanel(event);">
+      <span><img src="chat.png"/></span>
+    </div>
+    <div for="notes-panel" class="panel-button" id="notes-nav" onclick="switchPanel(event);">
+      <span><img src="book.png"/></span>
+    </div>
+  </div> <!---->
 
-  <div id="content">
+  <div class="panel" id="chat-panel">
+    <div id="controls" class="compact" style="display:none;">
+      <span id="profile-name">Ellis</span>
+      <div id="profile-icon" onclick="toggleProfileMenu(event);"></div>
+    </div>
+    <div id="header">
+      <h1>Legend Lore</h1>
+      <h2>D&D Campaign notes with intelligent search</h2>
+    </div>
     <div class="login" id="generate-code" style="display:none;">
       <form onsubmit="generateCode(event);">
         <p>Please enter your phone number to receive a log-in code.</p>
@@ -606,9 +786,15 @@ button, .login, .card {
         <div></div>
       </div>
     </div>
-    <div id="error" style="display:none;">
-      <p id="error-text"></p>
-    </div>
+  </div>
+
+  <div class="panel" id="notes-panel" style="display:none;">
+    <div id="notes-list"></div>
+    <div id="note-content"></div>
+  </div>
+
+  <div id="error" style="display:none;">
+    <p id="error-text"></p>
   </div>
   <script src="./marked.min.js"></script>
   <script>
@@ -618,7 +804,7 @@ const submitCodeDiv = document.getElementById('submit-code');
 const phoneNumber = document.getElementById('phone-number');
 const phoneNumber2 = document.getElementById('phone-number-2');
 const oneTimeCode = document.getElementById('one-time-code');
-const content = document.getElementById('content');
+const chatPanel = document.getElementById('chat-panel');
 const profileMenu = document.getElementById('profile-menu');
 const chatBox = document.getElementById('chat-box');
 const sideBar = document.getElementById('sidebar');
@@ -631,6 +817,8 @@ const loadingWheel = document.getElementById('loading-wheel');
 const lightButton = document.getElementById('light');
 const darkButton = document.getElementById('dark');
 const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+const notesList = document.getElementById('notes-list');
+const noteContent = document.getElementById('note-content');
 let hideTimeout = undefined;
 function menuHideToggle(event, hide) {
   clearTimeout(hideTimeout);
@@ -696,6 +884,8 @@ async function submitCode(event) {
     csrfToken = response.headers.get('x-csrf-token');
     submitCodeDiv.style.display = 'none';
     showUi(true, phoneNumber.value);
+    loadPreviousQueries();
+    loadNotesList();
   } else {
     try {
       const data = await response.json();
@@ -708,7 +898,7 @@ async function submitCode(event) {
 function showUi(shouldShow, profileNameValue) {
   const displayValue = shouldShow ? 'flex' : 'none';
   chatBox.style.display = displayValue;
-  // sideBar.style.display = displayValue;
+  sideBar.style.display = displayValue;
   controls.style.display = displayValue;
   profileName.innerText = profileNameValue;
 }
@@ -735,6 +925,7 @@ async function changeUiBasedOnLoginState() {
       const data = await response.json();
       showUi(true, data.phone);
       loadPreviousQueries();
+      loadNotesList();
     } catch {
       displayError("Error parsing the response, please log in again");
       generateCodeDiv.style.display = 'flex';
@@ -763,6 +954,70 @@ async function loadPreviousQueries() {
   } else {
     displayError("Failed to get previous queries");
   }
+}
+async function loadNotesList() {
+  let response = await fetch('https://api.dnd.elliscode.com/get-notes-list', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      for (let item of data) {
+        appendNoteToList(item);
+      }
+    } catch {
+      displayError("Failed to get notes list");
+    }
+  } else {
+    displayError("Failed to get notes list");
+  }
+}
+function appendNoteToList(noteFileName) {
+  const div = document.createElement('div');
+  div.innerText = noteFileName;
+  div.setAttribute('filename', noteFileName);
+  div.addEventListener('click', loadNote);
+  notesList.appendChild(div);
+}
+async function loadNote(event) {
+  const filename = event.target.getAttribute('filename');
+  let response = await fetch('https://api.dnd.elliscode.com/get-note', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      filename: filename
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      try {
+        noteContent.innerHTML = marked.parse(data.content, { breaks: true });
+        noteContent.appendChild(generateCloseButton());
+      } catch {
+        console.log(data.content);
+      }
+    } catch {
+      displayError("Failed to get previous queries");
+    }
+  } else {
+    displayError("Failed to get previous queries");
+  }
+}
+function generateCloseButton() {
+  const button = document.createElement('button');
+  button.innerHTML = '&times;'
+  button.classList.add('close');
+  button.addEventListener('click', removeContent);
+  return button;
+}
+function removeContent() {
+  noteContent.innerHTML = '';
 }
 async function handleChatSubmit(event) {
   event.preventDefault();
@@ -818,17 +1073,27 @@ function appendCard(question, answer) {
       answerDiv.innerText = answer;
     }
     div.appendChild(answerDiv);      
-    content.insertBefore(div, chatBox.nextElementSibling);
+    chatPanel.insertBefore(div, chatBox.nextElementSibling);
   }
 }
 function switchMode(event) {
   if (event.target == lightButton) {
     document.body.classList.remove('dark');
-    metaThemeColor.setAttribute('content', "#cccccc");
+    metaThemeColor.setAttribute('content', "#f8f8f8");
   } else {
     document.body.classList.add('dark');
     metaThemeColor.setAttribute('content', "#121214");
   }
+}
+function switchPanel(event) {
+  const panels = Array.from(document.getElementsByClassName('panel'));
+  panels.forEach(x=>x.style.display = 'none');
+  const buttons = Array.from(document.getElementsByClassName('panel-button'));
+  buttons.forEach(x=>x.classList.remove('selected'));
+  const forId = event.target.getAttribute('for');
+  const activePanel = document.getElementById(forId);
+  activePanel.style.display = 'flex';
+  event.target.classList.add('selected');
 }
 changeUiBasedOnLoginState();
   </script>

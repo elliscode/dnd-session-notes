@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="210mm"
+   viewBox="0 0 210 210"
+   version="1.1"
+   id="svg1"
+   inkscape:export-filename="sun.png"
+   inkscape:export-xdpi="4.8380952"
+   inkscape:export-ydpi="4.8380952"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   sodipodi:docname="sun-moon.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.77627799"
+     inkscape:cx="386.45949"
+     inkscape:cy="340.08436"
+     inkscape:window-width="1728"
+     inkscape:window-height="1051"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:none">
+    <path
+       id="path1"
+       style="display:inline;fill:#484848;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+       d="m 100.1665,25.34574 a 80,80 0 0 0 -75.166476,79.65405 80,80 0 0 0 79.999766,80.00029 80,80 0 0 0 79.65457,-75.16699 60,60 0 0 1 -45.7879,21.30051 A 60,60 0 0 1 78.866504,71.133126 60,60 0 0 1 100.1665,25.34574 Z" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2"
+     style="display:inline">
+    <circle
+       style="fill:#f1f1f1;fill-opacity:1;stroke-width:1.905;stroke-linejoin:round;paint-order:markers stroke fill"
+       id="circle2"
+       cx="105"
+       cy="105"
+       r="60" />
+    <g
+       id="g2"
+       transform="translate(-26.000515,4.771698)"
+       style="display:inline;fill:#f1f1f1;fill-opacity:1">
+      <rect
+         style="fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect2"
+         width="20"
+         height="8"
+         x="196.32141"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+      <rect
+         style="display:inline;fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect2-8"
+         width="20"
+         height="8"
+         x="45.679619"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+    </g>
+    <g
+       id="g8"
+       transform="rotate(-90,120.38611,115.61441)"
+       style="display:inline;fill:#f1f1f1;fill-opacity:1">
+      <rect
+         style="fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect7"
+         width="20"
+         height="8"
+         x="196.32141"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+      <rect
+         style="display:inline;fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect8"
+         width="20"
+         height="8"
+         x="45.679619"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+    </g>
+    <g
+       id="g10"
+       transform="rotate(-45,123.76021,133.99955)"
+       style="display:inline;fill:#f1f1f1;fill-opacity:1">
+      <rect
+         style="fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect9"
+         width="20"
+         height="8"
+         x="196.32141"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+      <rect
+         style="display:inline;fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect10"
+         width="20"
+         height="8"
+         x="45.679619"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+    </g>
+    <g
+       id="g12"
+       transform="matrix(-0.70710678,-0.70710678,-0.70710678,0.70710678,268.50346,126.75924)"
+       style="display:inline;fill:#f1f1f1;fill-opacity:1">
+      <rect
+         style="fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect11"
+         width="20"
+         height="8"
+         x="196.32141"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+      <rect
+         style="display:inline;fill:#f1f1f1;fill-opacity:1;stroke-width:2.54;stroke-linejoin:round;paint-order:markers stroke fill"
+         id="rect12"
+         width="20"
+         height="8"
+         x="45.679619"
+         y="96.228302"
+         rx="4"
+         ry="4" />
+    </g>
+  </g>
+</svg>

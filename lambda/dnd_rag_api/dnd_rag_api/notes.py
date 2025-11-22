@@ -11,7 +11,12 @@ from .utils import (
     lambda_client,
     S3_BUCKET,
     time,
+    re,
 )
+import html
+
+PREFIX = "session-notes/"
+SAFE_MD = re.compile(r"^[A-Za-z0-9._-]+\.md$", re.IGNORECASE)
 
 
 @authenticate
@@ -61,13 +66,11 @@ def get_completion_route(event, user_data, body):
 def get_notes_list_route(event, user_data, body):
     paginator = s3.get_paginator("list_objects_v2")
 
-    prefix = "session-notes/"
-
     files = []
 
-    for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=prefix):
+    for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=PREFIX):
         for obj in page.get("Contents", []):
-            files.append(obj["Key"].removeprefix(prefix))
+            files.append(obj["Key"].removeprefix(PREFIX))
 
     return format_response(
         event=event,
@@ -107,3 +110,30 @@ def get_previous_queries_route(event, user_data, body):
         http_code=200,
         body=output,
     )
+
+@authenticate
+def get_note_route(event, user_data, body):
+    filename = validate_filename(body["filename"])
+    if not filename:
+        return format_response(
+            event=event,
+            http_code=400,
+            body="Bad input, must include filename with a .md extension",
+        )
+    full_path = PREFIX + filename
+    response = s3.get_object(Bucket=S3_BUCKET, Key=full_path)
+    text = response["Body"].read().decode("utf-8")
+    return format_response(
+        event=event,
+        http_code=200,
+        body={
+            "filename": filename,
+            "content": html.escape(text),
+        },
+    )
+
+
+def validate_filename(name: str):
+    if not SAFE_MD.fullmatch(name):
+        return None
+    return name
