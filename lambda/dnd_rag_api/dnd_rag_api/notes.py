@@ -44,6 +44,7 @@ def get_completion_route(event, user_data, body):
             "time": int(time.time()),
             "query": question,
             "response": response_text,
+            "expiration": int(time.time()) + (60 * 60 * 24 * 30),
         }
         dynamo.put_item(
             TableName=TABLE_NAME,
