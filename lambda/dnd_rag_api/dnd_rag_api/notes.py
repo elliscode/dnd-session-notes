@@ -16,7 +16,7 @@ from .utils import (
 import html
 
 PREFIX = "session-notes/"
-SAFE_MD = re.compile(r"^[A-Za-z0-9._-]+\.md$", re.IGNORECASE)
+SAFE_MD = re.compile(r"^[/A-Za-z0-9_-]+\.md$", re.IGNORECASE)
 
 
 @authenticate

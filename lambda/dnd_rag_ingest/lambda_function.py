@@ -18,8 +18,8 @@ s3 = boto3.client("s3")
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
 
-DATA_FOLDER = "/tmp/session-notes"
-CHROMA_PATH = "/tmp/chroma_data"
+DATA_FOLDER = "/tmp/session-notes/"
+CHROMA_PATH = "/tmp/chroma_data/"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
@@ -128,17 +128,17 @@ def lambda_handler(event, context):
         existing_docs = {m["file_id"]: m for m in collection.get()["metadatas"]} if collection.count() > 0 else {}
 
         # Process all markdown files
-        md_files = glob.glob(os.path.join(DATA_FOLDER, "*.md"))
+        md_files = glob.glob(os.path.join(DATA_FOLDER, "**/*.md"), recursive=True)
         print(md_files)
         added_chunks = 0
 
         file_ids = []
         for file_path in md_files:
-            file_name = Path(file_path).name
+            file_name = file_path.removeprefix(DATA_FOLDER)
             file_id = file_name + file_hash(file_path)
             file_ids.append(file_id)
             if file_id in existing_docs:
-                print(f"Skipping {Path(file_path).name} (already embedded)")
+                print(f"Skipping {file_name} (already embedded)")
                 continue
 
             with open(file_path, "r", encoding="utf-8") as f:
