@@ -2,7 +2,6 @@ from .utils import (
     dynamo_obj_to_python_obj,
     python_obj_to_dynamo_obj,
     authenticate,
-    create_id,
     dynamo,
     TABLE_NAME,
     format_response,
@@ -131,6 +130,58 @@ def get_note_route(event, user_data, body):
             "filename": filename,
             "content": html.escape(text),
         },
+    )
+
+
+@authenticate
+def delete_note_route(event, user_data, body):
+    filename = validate_filename(body["filename"])
+    if not filename:
+        return format_response(
+            event=event,
+            http_code=400,
+            body="Bad input, must include filename with a .md extension",
+        )
+    full_path = PREFIX + filename
+    s3.delete_object(Bucket=S3_BUCKET, Key=full_path)
+    return format_response(
+        event=event,
+        http_code=200,
+        body=f"Successfully deleted {filename}",
+    )
+
+
+
+@authenticate
+def set_note_route(event, user_data, body):
+    output = {}
+    filename = validate_filename(body["filename"])
+    if not filename:
+        return format_response(
+            event=event,
+            http_code=400,
+            body="Bad input, must include filename with a .md extension",
+        )
+    old_filename = validate_filename(body["old_filename"])
+    if old_filename and old_filename != filename:
+        full_path = PREFIX + old_filename
+        response = s3.delete_object(Bucket=S3_BUCKET, Key=full_path)
+        output['delete'] = old_filename
+        if 'ResponseMetadata' in response and 'HTTPStatusCode' in response['ResponseMetadata'] and response['ResponseMetadata']['HTTPStatusCode'] == 204:
+            output['delete'] = old_filename
+    full_path = PREFIX + filename
+    response = s3.put_object(Bucket=S3_BUCKET, Key=full_path, Body=body['content'].encode('utf-8'))
+    if 'ETag' not in response:
+        return format_response(
+            event=event,
+            http_code=500,
+            body="Failed to write file",
+        )
+    output['write'] = filename
+    return format_response(
+        event=event,
+        http_code=200,
+        body=output,
     )
 
 

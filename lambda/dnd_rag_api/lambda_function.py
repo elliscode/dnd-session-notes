@@ -16,6 +16,8 @@ from dnd_rag_api.notes import (
     get_completion_route,
     get_previous_queries_route,
     get_note_route,
+    set_note_route,
+    delete_note_route,
 )
 
 
@@ -55,6 +57,10 @@ def route(event):
         return get_previous_queries_route(event)
     if path_equals(event=event, method="POST", path="/get-note"):
         return get_note_route(event)
+    if path_equals(event=event, method="POST", path="/set-note"):
+        return set_note_route(event)
+    if path_equals(event=event, method="POST", path="/delete-note"):
+        return delete_note_route(event)
     if path_equals(event=event, method="POST", path="/ping"):
         return format_response(
             event=event,
