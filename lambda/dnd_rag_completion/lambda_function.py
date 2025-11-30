@@ -14,7 +14,6 @@ S3_BUCKET = os.environ.get("S3_BUCKET")
 PLAYER_CHARACTERS = os.environ.get("PLAYER_CHARACTERS")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
-DATA_FOLDER = "/tmp/session-notes"
 CHROMA_PATH = "/tmp/chroma_data"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
