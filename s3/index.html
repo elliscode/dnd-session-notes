@@ -56,7 +56,7 @@ button:active {
   font-weight:lighter;
 }
 
-#chat-panel, #notes-panel {
+.panel {
   display:flex;
   align-items: center;
   position: relative;
@@ -66,7 +66,7 @@ button:active {
   flex-direction: column;
 }
 
-#chat-panel > *, #notes-panel > * {
+.panel > * {
   margin-top:0px;
 }
 
@@ -219,12 +219,13 @@ label > *:last-child {
   padding-right: 60px; /* Make space for the button */
 }
 
-input {
+input, textarea {
   font-size: large;
   border-radius: 1em;
   border-width: 1px;
   border-style: solid;
   border-color: #ccc;
+  resize: none
 }
 
 .input-wrapper {
@@ -374,7 +375,7 @@ input {
 #sidebar .panel-button span {
   pointer-events:none;
 }
-#note-content .close {
+.close {
   display:block;
   position: fixed;
   top: 5px;
@@ -398,6 +399,38 @@ input {
 }
 #notes-panel:not(:has(.close)) #note-content {
   display: none;
+}
+#note-form-panel {
+  box-sizing:border-box;
+}
+#note-form {
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  box-sizing:border-box;
+  padding: 5px;
+}
+#note-body {
+  flex-grow: 1;
+  margin-top: 5px;
+}
+#note-form-top {
+  display:flex;
+}
+#note-form-top label {
+  align-items: center;
+}
+#note-form-top label, #note-form-top input {
+  flex-grow:1;
+}
+#note-form-top input {
+  text-align: left;
+}
+#note-form-top label {
+  display:flex;
+}
+#note-form-panel input, #note-form-panel textarea {
+  font-family: monospace;
 }
 @media screen and (max-width:385px) {
   body {
@@ -430,7 +463,7 @@ input {
   #chat-text {
     width: calc(100%);
   }
-  input[type="text"] {
+  input[type="text"], textarea {
     padding: 0.5em 0.5em;
   }
   .login {
@@ -455,7 +488,7 @@ input {
     background-color: #121214;
     border-bottom: 1px solid #666;
   }
-  #notes-panel {
+  #notes-panel, #note-form-panel, #note-form {
     height: calc(100vh - 50px);
     height: calc(100dvh - 50px);
   }
@@ -464,7 +497,7 @@ input {
   }
   #note-content {
     position: absolute;
-    padding: 0px 5px 50vh 5px;
+    padding: 0px 5px 45px 5px;
   }
   #notes-panel:has(.close) #notes-list {
     display: none;
@@ -474,6 +507,18 @@ input {
   }
   #note-controls {
     flex-direction: row;
+  }
+  #note-form-top {
+    flex-direction:column;
+  }
+  #note-form-top label {
+    flex-direction:column;
+  }
+  #note-form-top input {
+    margin-left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom:5px;
   }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
@@ -503,7 +548,7 @@ input {
   #chat-text {
     width: 80vw;
   }
-  input[type="text"] {
+  input[type="text"], textarea {
     padding: 0.5em 1em;
   }
   .login {
@@ -523,7 +568,7 @@ input {
     background-color: #121214;
     border-bottom: 1px solid #666;
   }
-  #notes-panel {
+  #notes-panel, #note-form-panel, #note-form {
     height: calc(100vh - 50px);
     height: calc(100dvh - 50px);
   }
@@ -532,7 +577,7 @@ input {
   }
   #note-content {
     position: absolute;
-    padding: 0px 10px 50vh 10px;
+    padding: 0px 10px 45px 10px;
   }
   #notes-panel:has(.close) #notes-list {
     display: none;
@@ -542,6 +587,13 @@ input {
   }
   #note-controls {
     flex-direction: row;
+  }
+  #note-form-top {
+    flex-direction:column;
+  }
+  #note-form-top label {
+    flex-direction:row;
+    margin-bottom:5px;
   }
 }
 @media screen and (min-width:651px) {
@@ -571,7 +623,7 @@ input {
   #chat-text {
     width: 60vw;
   }
-  input[type="text"] {
+  input[type="text"], textarea {
     padding: 0.5em 1.5em;
   }
   .login {
@@ -586,7 +638,7 @@ input {
     justify-content:flex-start;
     flex-direction: column;
   }
-  #chat-panel, #notes-panel {
+  .panel {
     margin-left: 50px;
     width: calc(100% - 50px);
   }
@@ -598,7 +650,7 @@ input {
     background-color: #121214;
     border-right: 1px solid #333;
   }
-  #notes-panel {
+  #notes-panel, #note-form-panel, #note-form {
     height: calc(100vh);
     height: calc(100dvh);
   }
@@ -608,7 +660,7 @@ input {
   }
   #note-content {
     position: relative;
-    padding: 0px 15px 50vh 15px;
+    padding: 0px 15px 45px 15px;
     overflow-y: scroll;
     height: 100%;
   }
@@ -623,6 +675,19 @@ input {
   }
   #note-controls {
     flex-direction: row;
+  }
+  #note-form-top {
+    flex-direction:row;
+  }
+  #note-form-top label {
+    flex-direction:row;
+  }
+  #save-button {
+    margin-left:5px;
+  }
+  #note-form-panel .close {
+    top: 50px;
+    right: 10px;
   }
 }
 body.dark {
@@ -640,14 +705,14 @@ h2 {
 .dark .question {
   color:#666;
 }
-.dark input {
+.dark input, .dark textarea {
   color:#ccc;
   background-color:#121214;
 }
-input::placeholder {
+input::placeholder, textarea::placeholder {
   color:#ccc;
 }
-.dark input::placeholder {
+.dark input::placeholder, .dark textarea::placeholder {
   color:#666;
 }
 button, .login, .card {
@@ -765,6 +830,14 @@ button, .login, .card {
   color: white;
   background-color: #1a1a1e;
 }
+
+#note-form-panel {
+  color: black;
+}
+.dark #note-form-panel {
+  color: white;
+}
+
   </style>
 </head>
 
@@ -838,10 +911,20 @@ button, .login, .card {
     <div id="notes-list"></div>
     <div id="note-content"></div>
     <div id="note-controls">
-      <button id="add-note">Add</button>
-      <button id="edit-note">Edit</button>
-      <button id="delete-note">Delete</button>
+      <button for="note-form-panel" id="add-note" onclick="switchPanel(event);">Add</button>
+      <button for="note-form-panel" id="edit-note" onclick="switchPanel(event);">Edit</button>
+      <button for="delete-panel" id="delete-note">Delete</button>
     </div>
+  </div>
+
+  <div class="panel" id="note-form-panel" style="display:none;">
+    <form id="note-form">
+      <div id="note-form-top">
+        <label>File Name: <input/></label><button id="save-button">Save</button>
+      </div>
+      <textarea id="note-body"></textarea>
+    </form>
+    <button class="close" for="notes-panel" onclick="switchPanel(event);">&times;</button>
   </div>
 
   <div id="error" style="display:none;">
@@ -1144,12 +1227,12 @@ function switchMode(event) {
 function switchPanel(event) {
   const panels = Array.from(document.getElementsByClassName('panel'));
   panels.forEach(x=>x.style.display = 'none');
-  const buttons = Array.from(document.getElementsByClassName('panel-button'));
+  const buttons = Array.from(document.getElementsByClassName('selected'));
   buttons.forEach(x=>x.classList.remove('selected'));
   const forId = event.target.getAttribute('for');
   const activePanel = document.getElementById(forId);
   activePanel.style.display = 'flex';
-  event.target.classList.add('selected');
+  Array.from(document.querySelectorAll(`[for="${forId}"]`)).forEach(x=>x.classList.add('selected'));
 }
 changeUiBasedOnLoginState();
   </script>
