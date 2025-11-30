@@ -104,15 +104,9 @@ button:active {
 
 .card {
   display: flex;
-  width: 80vw;
   max-width: 800px;
   margin: 40px;
   box-sizing: border-box;
-}
-.login, .card {
-  padding: 40px;
-  border-radius: 20px;
-  margin: 20px 40px;
 }
 
 .auto {
@@ -380,7 +374,43 @@ input {
 #sidebar .panel-button span {
   pointer-events:none;
 }
+#note-content .close {
+  display:block;
+  position: fixed;
+  top: 5px;
+  right: 5px;
+}
+#note-content {
+  box-sizing:border-box;
+}
+#note-controls {
+  display: flex;
+  align-items: flex-end;
+  position: fixed;
+  bottom:5px;
+  right:5px;
+}
+#edit-note, #delete-note {
+  display:none;
+}
+#notes-panel:has(.close) #edit-note, #notes-panel:has(.close) #delete-note {
+  display:block;
+}
+#notes-panel:not(:has(.close)) #note-content {
+  display: none;
+}
 @media screen and (max-width:385px) {
+  body {
+    line-break:anywhere;
+  }
+  .login, .card {
+    padding: 5px;
+    border-radius: 20px;
+    margin: 10px;
+  }
+  #chat-box {
+    margin: 10px;
+  }
   #header {
     margin-top: 3em;
     align-items: start;
@@ -396,9 +426,6 @@ input {
   }
   .medium {
     padding: 5px;
-  }
-  .large {
-    padding: 10px;
   }
   #chat-text {
     width: calc(100%);
@@ -430,19 +457,14 @@ input {
   }
   #notes-panel {
     height: calc(100vh - 50px);
+    height: calc(100dvh - 50px);
   }
   #notes-list {
     width: 100%;
   }
   #note-content {
     position: absolute;
-    margin: 0px 5px;
-  }
-  #note-content .close {
-    display:block;
-    position: fixed;
-    top: 5px;
-    right: 5px;
+    padding: 0px 5px 50vh 5px;
   }
   #notes-panel:has(.close) #notes-list {
     display: none;
@@ -450,8 +472,19 @@ input {
   .lds-spinner {
     margin-top: 10px;
   }
+  #note-controls {
+    flex-direction: row;
+  }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
+  .login, .card {
+    padding: 20px;
+    border-radius: 20px;
+    margin: 10px 20px;
+  }
+  #chat-box {
+    margin: 10px 20px;
+  }
   #header {
     align-items: start;
   }
@@ -466,9 +499,6 @@ input {
   }
   .medium {
     padding: 10px;
-  }
-  .large {
-    padding: 20px;
   }
   #chat-text {
     width: 80vw;
@@ -495,19 +525,14 @@ input {
   }
   #notes-panel {
     height: calc(100vh - 50px);
+    height: calc(100dvh - 50px);
   }
   #notes-list {
     width: 100%;
   }
   #note-content {
     position: absolute;
-    margin: 0px 10px;
-  }
-  #note-content .close {
-    display:block;
-    position: fixed;
-    top: 5px;
-    right: 5px;
+    padding: 0px 10px 50vh 10px;
   }
   #notes-panel:has(.close) #notes-list {
     display: none;
@@ -515,8 +540,19 @@ input {
   .lds-spinner {
     margin-top: 20px;
   }
+  #note-controls {
+    flex-direction: row;
+  }
 }
 @media screen and (min-width:651px) {
+  .login, .card {
+    padding: 30px;
+    border-radius: 20px;
+    margin: 20px 40px;
+  }
+  #chat-box {
+    margin: 20px 40px;
+  }
   #header {
     align-items: center;
   }
@@ -531,9 +567,6 @@ input {
   }
   .medium {
     padding: 15px;
-  }
-  .large {
-    padding: 35px;
   }
   #chat-text {
     width: 60vw;
@@ -567,6 +600,7 @@ input {
   }
   #notes-panel {
     height: calc(100vh);
+    height: calc(100dvh);
   }
   #notes-list {
     min-width: 300px;
@@ -574,10 +608,9 @@ input {
   }
   #note-content {
     position: relative;
-    margin: 0px 15px;
-  }
-  #note-content .close {
-    display:none;
+    padding: 0px 15px 50vh 15px;
+    overflow-y: scroll;
+    height: 100%;
   }
   #notes-list {
     display:flex;
@@ -585,12 +618,11 @@ input {
     overflow-y: scroll;
     height: 100%;
   }
-  #note-content {
-    overflow-y: scroll;
-    height: 100%;
-  }
   .lds-spinner {
     margin-top: 35px;
+  }
+  #note-controls {
+    flex-direction: row;
   }
 }
 body.dark {
@@ -739,7 +771,6 @@ button, .login, .card {
 <body class="dark">
 
   <div id="profile-menu" style="display:none;" onmouseenter="menuHideToggle(event, false);" onmouseleave="menuHideToggle(event, true);">
-    <!-- <div>Settings</div> -->
     <div onclick="logout(event);">Log out</div>
   </div>
 
@@ -780,7 +811,7 @@ button, .login, .card {
         <button>Log In</button>
       </form>
     </div>
-    <div class="column large" id="chat-box" style="display:none;">
+    <div class="column" id="chat-box" style="display:none;">
       <p class="question">What do you want to know?</p>
       <form id="chat-form" class="input-wrapper" onsubmit="handleChatSubmit(event);">
         <input type="text" id="chat-text" placeholder="Ask anything"/>
@@ -806,6 +837,11 @@ button, .login, .card {
   <div class="panel" id="notes-panel" style="display:none;">
     <div id="notes-list"></div>
     <div id="note-content"></div>
+    <div id="note-controls">
+      <button id="add-note">Add</button>
+      <button id="edit-note">Edit</button>
+      <button id="delete-note">Delete</button>
+    </div>
   </div>
 
   <div id="error" style="display:none;">
@@ -1082,7 +1118,6 @@ function appendCard(question, answer) {
     let div = document.createElement('div');
     div.classList.add('card');
     div.classList.add('column');
-    div.classList.add('large');
     let questionDiv = document.createElement('span');
     questionDiv.classList.add('question');
     questionDiv.innerText = question;
