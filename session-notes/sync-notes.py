@@ -19,7 +19,9 @@ IGNORE_SUFFIXES = [".ignore.md"]
 
 
 def should_ignore(path: Path) -> bool:
-    return any(str(path).endswith(sfx) for sfx in IGNORE_SUFFIXES)
+    bad_suffix = any(str(path).endswith(sfx) for sfx in IGNORE_SUFFIXES)
+    bad_prefix = Path(path).resolve().is_relative_to(Path(BACKUP_DIR).resolve())
+    return bad_suffix or bad_prefix
 
 
 def sha256_of_file(path):
