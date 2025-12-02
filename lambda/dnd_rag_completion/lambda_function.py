@@ -11,7 +11,6 @@ import os
 s3 = boto3.client("s3")
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
-PLAYER_CHARACTERS = os.environ.get("PLAYER_CHARACTERS")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
 CHROMA_PATH = "/tmp/chroma_data"
@@ -96,7 +95,6 @@ def lambda_handler(event, context):
 You are a Dungeons & Dragons campaign assistant.
 The question you will answer relates to a DND campaign.
 There is no speaker or narrator, as this is a collective storytelling exercise.
-The player characters are {PLAYER_CHARACTERS}.
 The <QUESTION> you will answer will be accompanied by <SOURCE>s from a RAG application using ChromaDB.
 Always return a list of <SOURCE>s used to determine your answer by listing the <NAME>s with a short summary of the <TEXT>s, in a markdown-style list.
 If you deem a <SOURCE> to be unrelated, please ignore it and do not list it in the <SOURCE>s."""
