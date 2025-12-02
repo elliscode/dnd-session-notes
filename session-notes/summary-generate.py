@@ -10,10 +10,10 @@ client = openai.OpenAI()  # requires OPENAI_API_KEY in environment
 
 # Paths to your files
 files_to_add = [
+    "sessions/instructions-and-state.txt",
     f"sessions/{DATE}-notes.md",
     f"sessions/{DATE}-transcript.md",
     f"sessions/{DATE}-chat-log.md",
-    "sessions/instructions-and-state.txt"
 ]
 
 # Read file contents
@@ -39,8 +39,9 @@ context_text = "\n\n".join(f"--- {fname} ---\n{content}" for fname, content in f
 
 # Call the Chat API
 response = client.chat.completions.create(
-    model="gpt-4.1",
+    model="gpt-4.1-mini",
     max_tokens=800,
+    # store=True,
     messages=[
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"{user_prompt}\n\n{context_text}"}
@@ -51,7 +52,7 @@ response = client.chat.completions.create(
 summary_text = response.choices[0].message.content
 
 # Save to file
-summary_path = Path(f"sessions/{DATE}-test-41-mt800-summary.md")
+summary_path = Path(f"sessions/{DATE}-summary.md")
 summary_path.write_text(summary_text, encoding="utf-8")
 
 print(f"Summary written to {summary_path}")
