@@ -1,6 +1,6 @@
 from pathlib import Path
 import openai
-from datetime import date;
+from datetime import date
 
 
 DATE = date.today().isoformat()
