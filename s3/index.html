@@ -837,7 +837,38 @@ button, .login, .card {
 .dark #note-form-panel {
   color: white;
 }
-
+#delete-modal-bg {
+  display:flex;
+  position:fixed;
+  top:0px;
+  left:0px;
+  width:100%;
+  height:100%;
+  justify-content: center;
+  align-items: center;
+}
+#delete-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#delete-confirm {}
+#delete-cancel {}
+#delete-filename {
+  font-weight: bold;
+}
+#delete-modal-bg {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.dark #delete-modal-bg {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+#delete-modal-bg {
+  color: black;
+}
+.dark #delete-modal-bg {
+  color: white;
+}
   </style>
 </head>
 
@@ -911,16 +942,16 @@ button, .login, .card {
     <div id="notes-list"></div>
     <div id="note-content"></div>
     <div id="note-controls">
-      <button for="note-form-panel" id="add-note" onclick="switchPanel(event);">Add</button>
-      <button for="note-form-panel" id="edit-note" onclick="switchPanel(event);">Edit</button>
-      <button for="delete-panel" id="delete-note">Delete</button>
+      <button for="note-form-panel" id="add-note" onclick="clearNoteFormPanel(event);switchPanel(event);">Add</button>
+      <button for="note-form-panel" id="edit-note" onclick="loadNoteFormPanel(event);switchPanel(event);">Edit</button>
+      <button for="delete-panel" id="delete-note" onclick="showDeleteModal(event);">Delete</button>
     </div>
   </div>
 
   <div class="panel" id="note-form-panel" style="display:none;">
     <form id="note-form">
       <div id="note-form-top">
-        <label>File Name: <input/></label><button id="save-button">Save</button>
+        <label>File Name: <input id="file-name-input"/></label><button id="save-button" onclick="saveNotePanel(event);">Save</button>
       </div>
       <textarea id="note-body"></textarea>
     </form>
@@ -929,6 +960,16 @@ button, .login, .card {
 
   <div id="error" style="display:none;">
     <p id="error-text"></p>
+  </div>
+
+  <div id="delete-modal-bg" style="display:none;">
+    <div class="card" id="delete-modal">
+      <p>Are you sure you want to delete <span id="delete-filename"></span>?</p>
+      <div>
+        <button id="delete-confirm" onclick="deleteNote(event);">Delete</button>
+        <button id="delete-cancel" onclick="closeDeleteModal(event);">Cancel</button>
+      </div>
+    </div>
   </div>
   <script src="./marked.min.js"></script>
   <script>
@@ -953,7 +994,14 @@ const darkButton = document.getElementById('dark');
 const metaThemeColor = document.querySelector('meta[name="theme-color"]');
 const notesList = document.getElementById('notes-list');
 const noteContent = document.getElementById('note-content');
+const noteFormPanel = document.getElementById('note-form-panel');
+const fileNameInput = document.getElementById('file-name-input');
+const noteBody = document.getElementById('note-body');
+const deleteModalBg = document.getElementById('delete-modal-bg');
+const deleteFilename = document.getElementById('delete-filename');
+let noteResponse = undefined;
 let hideTimeout = undefined;
+let panelOpened = 'add';
 function menuHideToggle(event, hide) {
   clearTimeout(hideTimeout);
   if (hide) {
@@ -1092,7 +1140,7 @@ async function loadPreviousQueries() {
     displayError("Failed to get previous queries");
   }
 }
-async function loadNotesList() {
+async function loadNotesList(callback) {
   let response = await fetch('https://api.dnd.elliscode.com/get-notes-list', {
     method: "POST",
     credentials: "include",
@@ -1102,15 +1150,24 @@ async function loadNotesList() {
   });
   if (200 <= response.status && response.status < 300) {
     try {
+      clearNoteList();
       const data = await response.json();
       for (let item of data) {
         appendNoteToList(item);
+      }
+      if (callback) {
+        callback();
       }
     } catch {
       displayError("Failed to get notes list");
     }
   } else {
     displayError("Failed to get notes list");
+  }
+}
+function clearNoteList() {
+  while(notesList.firstElementChild) {
+    notesList.firstElementChild.remove();
   }
 }
 function appendNoteToList(noteFileName) {
@@ -1120,8 +1177,13 @@ function appendNoteToList(noteFileName) {
   div.addEventListener('click', loadNote);
   notesList.appendChild(div);
 }
-async function loadNote(event) {
-  const filename = event.target.getAttribute('filename');
+async function loadNote(event, callback) {
+  let filename = undefined
+  if (typeof event == "string") {
+    filename = event;
+  } else {
+    filename = event.target.getAttribute('filename');
+  }
   let response = await fetch('https://api.dnd.elliscode.com/get-note', {
     method: "POST",
     credentials: "include",
@@ -1133,6 +1195,7 @@ async function loadNote(event) {
   if (200 <= response.status && response.status < 300) {
     try {
       const data = await response.json();
+      noteResponse = data;
       try {
         Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
         noteContent.innerHTML = marked.parse(data.content, { breaks: true });
@@ -1141,11 +1204,14 @@ async function loadNote(event) {
       } catch {
         console.log(data.content);
       }
+      if (callback) {
+        callback();
+      }
     } catch {
-      displayError("Failed to get previous queries");
+      displayError("Failed to get note data");
     }
   } else {
-    displayError("Failed to get previous queries");
+    displayError("Failed to get note data");
   }
 }
 function generateCloseButton() {
@@ -1156,6 +1222,7 @@ function generateCloseButton() {
   return button;
 }
 function removeContent() {
+  noteResponse = undefined;
   Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
   noteContent.innerHTML = '';
 }
@@ -1229,10 +1296,114 @@ function switchPanel(event) {
   panels.forEach(x=>x.style.display = 'none');
   const buttons = Array.from(document.getElementsByClassName('selected'));
   buttons.forEach(x=>x.classList.remove('selected'));
-  const forId = event.target.getAttribute('for');
+  let forId = undefined;
+  if (typeof event == "string") {
+    forId = event;
+  } else {
+    forId = event.target.getAttribute('for');
+  }
   const activePanel = document.getElementById(forId);
   activePanel.style.display = 'flex';
   Array.from(document.querySelectorAll(`[for="${forId}"]`)).forEach(x=>x.classList.add('selected'));
+  if (noteResponse) {
+    const fileEntry = document.querySelector(`div[filename="${noteResponse.filename}"]`);
+    if (fileEntry) {
+      fileEntry.classList.add('selected');
+      fileEntry.scrollIntoView();
+    }
+  }
+}
+function clearNoteFormPanel(event) {
+  panelOpened = 'add';
+  const textThings = Array.from(noteFormPanel.querySelectorAll(`textarea, input`));
+  textThings.forEach(x=>x.value = '');
+}
+function loadNoteFormPanel(event) {
+  panelOpened = 'edit';
+  fileNameInput.value = noteResponse.filename;
+  const placeholderDiv = document.createElement('div');
+  placeholderDiv.innerHTML = noteResponse.content;
+  noteBody.value = placeholderDiv.innerText;
+}
+async function saveNotePanel(event) {
+  event.preventDefault();
+  const filename = fileNameInput.value;
+  let oldFilename = undefined;
+  if (panelOpened == 'edit') {
+    oldFilename = noteResponse.filename;
+  }
+  let response = await fetch('https://api.dnd.elliscode.com/set-note', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      filename: filename,
+      old_filename: oldFilename,
+      content: noteBody.value
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      noteResponse = data;
+      try {
+        Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
+        noteContent.innerHTML = marked.parse(data.content, { breaks: true });
+        noteContent.appendChild(generateCloseButton());
+        event.target.classList.add('selected');
+      } catch {
+        console.log(data.content);
+      }
+      loadNotesList(()=>{loadNote(filename, ()=>{switchPanel('notes-panel');});});
+    } catch {
+      displayError("Failed to write note");
+      switchPanel('notes-panel')
+    }
+  } else {
+    displayError("Failed to write note");
+      switchPanel('notes-panel')
+  }
+}
+function showDeleteModal(event) {
+  deleteModalBg.style.display = 'flex';
+  deleteFilename.innerText = noteResponse.filename;
+}
+function closeDeleteModal(event) {
+  deleteModalBg.style.display = 'none';
+}
+async function deleteNote(event) {
+  event.preventDefault();
+  const filename = noteResponse.filename;
+  let response = await fetch('https://api.dnd.elliscode.com/delete-note', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      filename: filename,
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      noteResponse = data;
+      try {
+        Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
+        noteContent.innerHTML = marked.parse(data.content, { breaks: true });
+        noteContent.appendChild(generateCloseButton());
+        event.target.classList.add('selected');
+      } catch {
+        console.log(data.content);
+      }
+      removeContent();
+      loadNotesList(()=>{switchPanel('notes-panel'); closeDeleteModal();});
+    } catch {
+      displayError("Failed to delete note");
+      switchPanel('notes-panel')
+    }
+  } else {
+    displayError("Failed to delete note");
+      switchPanel('notes-panel')
+  }
 }
 changeUiBasedOnLoginState();
   </script>

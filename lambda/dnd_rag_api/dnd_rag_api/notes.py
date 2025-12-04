@@ -162,7 +162,7 @@ def set_note_route(event, user_data, body):
             http_code=400,
             body="Bad input, must include filename with a .md extension",
         )
-    old_filename = validate_filename(body["old_filename"])
+    old_filename = validate_filename(body.get("old_filename"))
     if old_filename and old_filename != filename:
         full_path = PREFIX + old_filename
         response = s3.delete_object(Bucket=S3_BUCKET, Key=full_path)
@@ -186,6 +186,8 @@ def set_note_route(event, user_data, body):
 
 
 def validate_filename(name: str):
+    if not name:
+        return None
     if not SAFE_MD.fullmatch(name):
         return None
     return name

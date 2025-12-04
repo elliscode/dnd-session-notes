@@ -68,4 +68,4 @@ def route(event):
             body="pong",
         )
 
-    return format_response(event=event, http_code=404, body="No matching route found")
+    return format_response(event=event, http_code=401, body="Permission denied")
