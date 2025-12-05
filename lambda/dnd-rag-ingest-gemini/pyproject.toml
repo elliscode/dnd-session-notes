@@ -1,0 +1,21 @@
+[project]
+name = "dnd-rag-ingest-gemini"
+version = "0.1.0"
+description = ""
+requires-python = "==3.14.*"
+dependencies = [
+    "boto3>=0",
+    "google-genai>=1.5.3"
+]
+
+[dependency-groups]
+dev = [
+    "black",
+]
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+
+
+[tool.black]
+line-length = 120
