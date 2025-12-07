@@ -356,8 +356,9 @@ input, textarea {
     opacity: 0;
   }
 }
-.question {
+.question, .model {
   color: #aaa;
+  border-color: #aaa;
   font-size: small;
 }
 #sidebar {
@@ -441,6 +442,18 @@ input, textarea {
 }
 .select-label select {
   min-width:200px;
+}
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start
+}
+.model {
+  white-space: nowrap;
+  padding: 3px 6px;
+  margin: -3px -3px 2px 2px;
+  border: 1px solid;
+  border-radius: 10px;
 }
 @media screen and (max-width:385px) {
   body {
@@ -730,8 +743,9 @@ h2 {
 .dark h2 {
   color: #666;
 }
-.dark .question {
+.dark .question, .dark .model {
   color:#666;
+  border-color:#666;
 }
 .dark input, .dark textarea {
   color:#ccc;
@@ -960,7 +974,7 @@ option {
   color: black;
 }
 .select-label span {
-  color:white;
+  color:#ffffff;
 }
   </style>
 </head>
@@ -1265,7 +1279,7 @@ async function loadPreviousQueries() {
     try {
       const data = await response.json();
       for (let item of data) {
-        appendCard(item.query, item.response);
+        appendCard(item.query, item.response, item.model);
       }
     } catch {
       displayError("Failed to get previous queries");
@@ -1398,7 +1412,7 @@ async function handleChatSubmit(event) {
   });
   if (200 <= response.status && response.status < 300) {
     const data = await response.json();
-    appendCard(data.query, data.response);
+    appendCard(data.query, data.response, data.model);
     loadingWheels.forEach(x=>x.style.display = 'none');
     chatText.value = '';
     chatText.disabled = false;
@@ -1413,15 +1427,22 @@ async function handleChatSubmit(event) {
     }
   }
 }
-function appendCard(question, answer) {
+function appendCard(question, answer, model) {
   {
     let div = document.createElement('div');
     div.classList.add('card');
     div.classList.add('column');
+    let topBarDiv = document.createElement('div');
+    topBarDiv.classList.add('top-bar');
     let questionDiv = document.createElement('span');
     questionDiv.classList.add('question');
     questionDiv.innerText = question;
-    div.appendChild(questionDiv);
+    topBarDiv.appendChild(questionDiv);
+    let modelDiv = document.createElement('span');
+    modelDiv.classList.add('model');
+    modelDiv.innerText = model;
+    topBarDiv.appendChild(modelDiv);
+    div.appendChild(topBarDiv);
     let answerDiv = document.createElement('div');
     try {
       answerDiv.innerHTML = marked.parse(answer);

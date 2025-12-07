@@ -45,6 +45,7 @@ def get_completion_route(event, user_data, body):
             "query": question,
             "response": response_text,
             "expiration": int(time.time()) + (60 * 60 * 24 * 30),
+            "model": "ChatGPT",
         }
         dynamo.put_item(
             TableName=TABLE_NAME,
@@ -59,6 +60,7 @@ def get_completion_route(event, user_data, body):
             "time": time_value,
             "query": question,
             "response": response_text,
+            "model": "ChatGPT",
         }
     )
 
@@ -99,6 +101,7 @@ def get_completion_gemini_route(event, user_data, body):
             "query": question,
             "response": response_text,
             "expiration": int(time.time()) + (60 * 60 * 24 * 30),
+            "model": "Gemini",
         }
         dynamo.put_item(
             TableName=TABLE_NAME,
@@ -113,6 +116,7 @@ def get_completion_gemini_route(event, user_data, body):
             "time": time_value,
             "query": question,
             "response": response_text,
+            "model": "Gemini",
         }
     )
 
@@ -159,6 +163,7 @@ def get_previous_queries_route(event, user_data, body):
             "time": int(python_item["time"]),
             "query": python_item["query"],
             "response": python_item["response"],
+            "model": python_item.get("model", "ChatGPT")
         })
     return format_response(
         event=event,
