@@ -1,7 +1,7 @@
 import json
 import traceback
 
-from dnd_rag_api.utils import (
+from dnd_notes_lambda.utils import (
     otp_route,
     login_route,
     path_equals,
@@ -11,9 +11,10 @@ from dnd_rag_api.utils import (
     logged_in_check_route,
 )
 
-from dnd_rag_api.notes import (
+from dnd_notes_lambda.notes import (
     get_notes_list_route,
     get_completion_route,
+    get_completion_gemini_route,
     get_previous_queries_route,
     get_note_route,
     set_note_route,
@@ -51,6 +52,8 @@ def route(event):
         return ios_cookie_refresh_route(event)
     if path_equals(event=event, method="POST", path="/get-completion"):
         return get_completion_route(event)
+    if path_equals(event=event, method="POST", path="/get-completion-gemini"):
+        return get_completion_gemini_route(event)
     if path_equals(event=event, method="POST", path="/get-notes-list"):
         return get_notes_list_route(event)
     if path_equals(event=event, method="POST", path="/get-previous-queries"):

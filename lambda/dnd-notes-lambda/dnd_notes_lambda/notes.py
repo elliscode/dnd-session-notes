@@ -13,6 +13,7 @@ from .utils import (
     re,
 )
 import html
+import traceback
 
 PREFIX = "session-notes/"
 SAFE_MD = re.compile(r"^[/A-Za-z0-9_-]+\.md$", re.IGNORECASE)
@@ -50,7 +51,61 @@ def get_completion_route(event, user_data, body):
             Item=python_obj_to_dynamo_obj(completion_data),
         )
     except:
-        pass
+        traceback.print_exc()
+    return format_response(
+        event=event,
+        http_code=status_code,
+        body={
+            "time": time_value,
+            "query": question,
+            "response": response_text,
+        }
+    )
+
+
+@authenticate
+def get_completion_gemini_route(event, user_data, body):
+    status_code = 500
+    question = "No question provided"
+    response_text = "Failed to fetch completion, pleasse try again later"
+    time_value = int(time.time())
+    try:
+        question = body["query"]
+        resp = lambda_client.invoke(
+            FunctionName="dnd-rag-completion-gemini",
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"body": {"user": user_data['key2'], "query": question}})
+        )
+        response_body = json.loads(resp["Payload"].read().decode())
+        print(f'User: {user_data["key2"]} -- Query: {question} -- Response: {response_body["body"]}')
+        status_code = response_body["statusCode"]
+        response_json = json.loads(response_body["body"])
+        source_strings = ""
+        for source in response_json["sources"]:
+            source_strings += f"* {source}\n"
+        response_text = f"""
+{response_json['response']}
+
+## Sources
+
+{source_strings}
+"""
+        # write to DB
+        completion_data = {
+            "key1": "completion",
+            "key2": f'{user_data["key2"]}#{time_value}',
+            "user": user_data["key2"],
+            "time": int(time.time()),
+            "query": question,
+            "response": response_text,
+            "expiration": int(time.time()) + (60 * 60 * 24 * 30),
+        }
+        dynamo.put_item(
+            TableName=TABLE_NAME,
+            Item=python_obj_to_dynamo_obj(completion_data),
+        )
+    except:
+        traceback.print_exc()
     return format_response(
         event=event,
         http_code=status_code,

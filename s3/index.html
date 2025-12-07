@@ -40,18 +40,18 @@ button:active {
 .selected {
   background-color: #ddd;
 }
-#header {
+.header {
   display:flex;
   flex-direction:column;
   justify-content: center;
   margin: 1em;
 }
-#header h1 {
+.header h1 {
   font-weight: 500;
   margin: 0;
 }
 
-#header h2 {
+.header h2 {
   margin: 0;
   font-weight:lighter;
 }
@@ -81,7 +81,7 @@ button:active {
   cursor: pointer;
 }
 
-#header {
+.header {
   margin-top: 1em;
 }
 
@@ -147,7 +147,6 @@ button:active {
 
 label > *:last-child {
   flex-grow: 1;
-  margin-left: 10px;
   font-size: 16px;
   border-radius: 20px;
   padding: 5px;
@@ -432,6 +431,17 @@ input, textarea {
 #note-form-panel input, #note-form-panel textarea {
   font-family: monospace;
 }
+.select-label {
+  display:flex;
+  align-items:center;
+  margin-top:18px;
+}
+.select-label span {
+  white-space:nowrap;
+}
+.select-label select {
+  min-width:200px;
+}
 @media screen and (max-width:385px) {
   body {
     line-break:anywhere;
@@ -444,14 +454,14 @@ input, textarea {
   #chat-box {
     margin: 10px;
   }
-  #header {
+  .header {
     margin-top: 3em;
     align-items: start;
   }
-  #header h1 {
+  .header h1 {
     font-size:xx-large;
   }
-  #header h2 {
+  .header h2 {
     font-size:medium;
   }
   .compact {
@@ -520,6 +530,12 @@ input, textarea {
     box-sizing: border-box;
     margin-bottom:5px;
   }
+  .select-label {
+    flex-direction:column;
+  }
+  label > *:last-child {
+    margin-left: 0;
+  }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
   .login, .card {
@@ -530,13 +546,13 @@ input, textarea {
   #chat-box {
     margin: 10px 20px;
   }
-  #header {
+  .header {
     align-items: start;
   }
-  #header h1 {
+  .header h1 {
     font-size:xx-large;
   }
-  #header h2 {
+  .header h2 {
     font-size:medium;
   }
   .compact {
@@ -595,6 +611,12 @@ input, textarea {
     flex-direction:row;
     margin-bottom:5px;
   }
+  .select-label {
+    flex-direction:row;
+  }
+  label > *:last-child {
+    margin-left: 10px;
+  }
 }
 @media screen and (min-width:651px) {
   .login, .card {
@@ -605,13 +627,13 @@ input, textarea {
   #chat-box {
     margin: 20px 40px;
   }
-  #header {
+  .header {
     align-items: center;
   }
-  #header h1 {
+  .header h1 {
     font-size:xxx-large;
   }
-  #header h2 {
+  .header h2 {
     font-size:large;
   }
   .compact {
@@ -688,6 +710,12 @@ input, textarea {
   #note-form-panel .close {
     top: 50px;
     right: 10px;
+  }
+  .select-label {
+    flex-direction:row;
+  }
+  label > *:last-child {
+    margin-left: 10px;
   }
 }
 body.dark {
@@ -869,6 +897,71 @@ button, .login, .card {
 .dark #delete-modal-bg {
   color: white;
 }
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;
+}
+select {
+    border-radius: 8px;
+    padding: 10px 40px 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+}
+select {
+    background-color: #FFFFFF;
+    color: #000000;
+    border: 1px solid #cccccc;
+}
+.dark select {
+    background-color: #000000;
+    color: #FFFFFF;
+    border: 1px solid #666666;
+}
+select:hover {
+    background-color: #eeeeee;
+}
+.dark select:hover {
+    background-color: #111111;
+}
+option {
+    padding: 5px 10px;
+}
+option {
+    background-color: #FFFFFF;
+    color: #333333;
+}
+.dark option {
+    background-color: #333333;
+    color: #FFFFFF;
+}
+.custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+    min-width:210px;
+}
+.custom-select-wrapper::after {
+    content: '▼';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+.custom-select-wrapper::after {
+    color: #CCCCCC;
+}
+.dark .custom-select-wrapper::after {
+    color: #CCCCCC;
+}
+.select-label span {
+  color: black;
+}
+.select-label span {
+  color:white;
+}
   </style>
 </head>
 
@@ -889,6 +982,9 @@ button, .login, .card {
     <div for="notes-panel" class="panel-button" id="notes-nav" onclick="switchPanel(event);">
       <span><img src="book.png"/></span>
     </div>
+    <div for="summary-panel" class="panel-button" id="summary-nav" onclick="switchPanel(event);">
+      <span><img src="wand-book.png"/></span>
+    </div>
   </div> <!---->
 
   <div class="panel" id="chat-panel">
@@ -896,7 +992,7 @@ button, .login, .card {
       <span id="profile-name">Ellis</span>
       <div id="profile-icon" onclick="toggleProfileMenu(event);"></div>
     </div>
-    <div id="header">
+    <div class="header">
       <h1>Legend Lore</h1>
       <h2>D&D Campaign notes with intelligent search</h2>
     </div>
@@ -921,7 +1017,8 @@ button, .login, .card {
         <input type="text" id="chat-text" placeholder="Ask anything"/>
         <button id="chat-button" type="submit">&#8629;</button>
       </form>
-      <div id="loading-wheel" class="lds-spinner" style="display:none;">
+      <div><label class="select-label" for="model-choice"><span>Select your model:</span><div class="custom-select-wrapper"><select id="model-choice"><option>ChatGPT</option><option>Gemini</option></select></div></label></div>
+      <div class="lds-spinner" style="display:none;">
         <div></div>
         <div></div>
         <div></div>
@@ -958,6 +1055,39 @@ button, .login, .card {
     <button class="close" for="notes-panel" onclick="switchPanel(event);">&times;</button>
   </div>
 
+  <div class="panel" id="summary-panel" style="display:none;flex-direction:column;">
+    <div class="header">
+      <h1>D&D Session Summary</h1>
+      <h2>Turn the notes from a recent session into a summary</h2>
+    </div>
+    <div class="card" id="session-summary-select">
+      <div style="display:flex;flex-direction:column;">
+        <p style="margin-top:0;">Choose a date to summarize:</p>
+        <div class="custom-select-wrapper">
+          <select id="generate-summary-date-select">
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center; margin-top:16px;">
+          <button>Generate</button>
+        </div>
+      </div>
+    </div>
+    <div class="lds-spinner" style="display:none;">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+
   <div id="error" style="display:none;">
     <p id="error-text"></p>
   </div>
@@ -973,6 +1103,7 @@ button, .login, .card {
   </div>
   <script src="./marked.min.js"></script>
   <script>
+const DATE_REGEX = /^sessions\/(\d{4}\-\d{2}\-\d{2})\-(chat\-log|notes|transcript)\.md$/
 const controls = document.getElementById('controls');
 const generateCodeDiv = document.getElementById('generate-code');
 const submitCodeDiv = document.getElementById('submit-code');
@@ -988,7 +1119,7 @@ const errorText = document.getElementById('error-text');
 const profileName = document.getElementById('profile-name');
 const chatText = document.getElementById('chat-text');
 const chatButton = document.getElementById('chat-button');
-const loadingWheel = document.getElementById('loading-wheel');
+const loadingWheels = Array.from(document.getElementsByClassName('lds-spinner'));
 const lightButton = document.getElementById('light');
 const darkButton = document.getElementById('dark');
 const metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -999,9 +1130,12 @@ const fileNameInput = document.getElementById('file-name-input');
 const noteBody = document.getElementById('note-body');
 const deleteModalBg = document.getElementById('delete-modal-bg');
 const deleteFilename = document.getElementById('delete-filename');
+const generateSummaryDateSelect = document.getElementById('generate-summary-date-select');
+const modelChoice = document.getElementById('model-choice');
 let noteResponse = undefined;
 let hideTimeout = undefined;
 let panelOpened = 'add';
+const datesFound = [];
 function menuHideToggle(event, hide) {
   clearTimeout(hideTimeout);
   if (hide) {
@@ -1171,11 +1305,21 @@ function clearNoteList() {
   }
 }
 function appendNoteToList(noteFileName) {
-  const div = document.createElement('div');
-  div.innerText = noteFileName;
-  div.setAttribute('filename', noteFileName);
-  div.addEventListener('click', loadNote);
-  notesList.appendChild(div);
+  {
+    const div = document.createElement('div');
+    div.innerText = noteFileName;
+    div.setAttribute('filename', noteFileName);
+    div.addEventListener('click', loadNote);
+    notesList.appendChild(div);
+  }
+  const result = DATE_REGEX.exec(noteFileName);
+  if (result && !datesFound.includes(result[1])) {
+    const option = document.createElement('option');
+    option.innerText = result[1];
+    datesFound.push(result[1]);
+    generateSummaryDateSelect.insertBefore(option, generateSummaryDateSelect.firstElementChild);
+    generateSummaryDateSelect.selectedIndex = 0;
+  }
 }
 async function loadNote(event, callback) {
   let filename = undefined
@@ -1238,8 +1382,13 @@ async function handleChatSubmit(event) {
   chatText.blur();
   chatText.disabled = true;
   chatButton.disabled = true;
-  loadingWheel.style.display = 'block';
-  let response = await fetch('https://api.dnd.elliscode.com/get-completion', {
+  modelChoice.disabled = true;
+  loadingWheels.forEach(x=>x.style.display = 'block');
+  urlSuffix = '';
+  if (modelChoice.value == 'Gemini') {
+    urlSuffix = '-gemini';
+  }
+  let response = await fetch(`https://api.dnd.elliscode.com/get-completion${urlSuffix}`, {
     method: "POST",
     credentials: "include",
     body: JSON.stringify({
@@ -1250,10 +1399,11 @@ async function handleChatSubmit(event) {
   if (200 <= response.status && response.status < 300) {
     const data = await response.json();
     appendCard(data.query, data.response);
-    loadingWheel.style.display = 'none';
+    loadingWheels.forEach(x=>x.style.display = 'none');
     chatText.value = '';
     chatText.disabled = false;
     chatButton.disabled = false;
+    modelChoice.disabled = false;
   } else {
     try {
       const data = await response.json();
@@ -1303,7 +1453,9 @@ function switchPanel(event) {
     forId = event.target.getAttribute('for');
   }
   const activePanel = document.getElementById(forId);
-  activePanel.style.display = 'flex';
+  if (activePanel) {
+    activePanel.style.display = 'flex';
+  }
   Array.from(document.querySelectorAll(`[for="${forId}"]`)).forEach(x=>x.classList.add('selected'));
   if (noteResponse) {
     const fileEntry = document.querySelector(`div[filename="${noteResponse.filename}"]`);
