@@ -1,13 +1,37 @@
-rm -rf dimg
-docker stop $(docker ps -q)
-docker build -t dnd-rag-ingest-gemini .
-docker rm dnd-rag-ingest-gemini-instance
-docker run -d -p 2222:22 --name dnd-rag-ingest-gemini-instance dnd-rag-ingest-gemini
-docker cp dnd-rag-ingest-gemini-instance:/opt/python dimg
+#!/usr/bin/env bash
+set -euo pipefail
+
+IMAGE=dnd-rag-ingest-gemini
+CONTAINER=${IMAGE}-instance
+FUNCTION_NAME=dnd-rag-ingest-gemini
+
 TIMESTAMP=$(date +%s)
+ZIP=dnd-rag-ingest-gemini-lambda-release-${TIMESTAMP}.zip
+
+# Clean old artifacts
+rm -rf dimg
+
+# Build image
+docker build -t "${IMAGE}" .
+
+# Ensure container is gone
+docker rm -f "${CONTAINER}" 2>/dev/null || true
+
+# Run container and extract deps
+docker run -d --name "${CONTAINER}" "${IMAGE}"
+docker cp "${CONTAINER}:/opt/python" dimg
+
+# Add handler
 cp lambda_function.py dimg/
-cd dimg
-zip -vr ../../../dnd-rag-ingest-gemini-lambda-release-${TIMESTAMP}.zip .
-cd ../../../
-aws lambda update-function-code --function-name=dnd-rag-ingest-gemini --zip-file=fileb://dnd-rag-ingest-gemini-lambda-release-${TIMESTAMP}.zip --no-cli-pager
-cd lambda/dnd-rag-ingest-gemini
+
+# Zip lambda package
+(
+  cd dimg
+  zip -vr "../${ZIP}" .
+)
+
+# Update Lambda
+aws lambda update-function-code \
+  --function-name "${FUNCTION_NAME}" \
+  --zip-file "fileb://${ZIP}" \
+  --no-cli-pager
