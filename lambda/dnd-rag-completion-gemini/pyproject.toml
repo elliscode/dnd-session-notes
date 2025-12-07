@@ -1,5 +1,5 @@
 [project]
-name = "dnd-rag-ingest-gemini"
+name = "dnd-rag-completion-gemini"
 version = "0.1.0"
 description = ""
 requires-python = "==3.14.*"

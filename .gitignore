@@ -165,5 +165,6 @@ logfile
 .vscode/
 Pipfile.lock
 *.test.py
-session-notes/*
+session-notes*/*
 uv.lock
+dimg/
