@@ -248,8 +248,8 @@ def synchronize_files(gemini_client, s3_client, s3_map: dict, remote_map: dict):
 
 
 def lambda_handler(event, context):
+    logger.info(event)
     s3_client = boto3.client('s3')
-    s3_client.delete_object(Bucket=S3_BUCKET, Key=S3_PENDING)
     try:
         gemini_client = genai.Client()
 

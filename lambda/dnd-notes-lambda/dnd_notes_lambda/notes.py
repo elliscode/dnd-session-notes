@@ -82,16 +82,15 @@ def get_completion_gemini_route(event, user_data, body):
         print(f'User: {user_data["key2"]} -- Query: {question} -- Response: {response_body["body"]}')
         status_code = response_body["statusCode"]
         response_json = json.loads(response_body["body"])
-        source_strings = ""
-        for source in response_json["sources"]:
-            source_strings += f"* {source}\n"
-        response_text = f"""
-{response_json['response']}
-
-## Sources
-
-{source_strings}
-"""
+        response_text = ''
+        if 'response' in response_json:
+            response_text += response_json['response']
+        if 'message' in response_json:
+            response_text += response_json['message']
+        if 'sources' in response_json:
+            response_text += "\n\n## Sources"
+            for source in response_json.get("sources", []):
+                response_text += f"\n* {source}"
         # write to DB
         completion_data = {
             "key1": "completion",
@@ -204,6 +203,19 @@ def delete_note_route(event, user_data, body):
         )
     full_path = PREFIX + filename
     s3.delete_object(Bucket=S3_BUCKET, Key=full_path)
+    try:
+        lambda_client.invoke(
+            FunctionName="dnd-rag-ingest-gemini",
+            InvocationType="Event",
+            Payload=json.dumps(user_data)
+        )
+        lambda_client.invoke(
+            FunctionName="dnd_rag_ingest",
+            InvocationType="Event",
+            Payload=json.dumps(user_data)
+        )
+    except:
+        traceback.print_exc()
     return format_response(
         event=event,
         http_code=200,
@@ -238,6 +250,19 @@ def set_note_route(event, user_data, body):
             body="Failed to write file",
         )
     output['write'] = filename
+    try:
+        lambda_client.invoke(
+            FunctionName="dnd-rag-ingest-gemini",
+            InvocationType="Event",
+            Payload=json.dumps(user_data)
+        )
+        lambda_client.invoke(
+            FunctionName="dnd_rag_ingest",
+            InvocationType="Event",
+            Payload=json.dumps(user_data)
+        )
+    except:
+        traceback.print_exc()
     return format_response(
         event=event,
         http_code=200,

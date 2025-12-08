@@ -1,12 +1,15 @@
 import json
 import traceback
 
+from datetime import datetime
+
 from openai import OpenAI
 import chromadb
 from chromadb.utils import embedding_functions
 import boto3
 import zipfile
 import os
+import time
 
 s3 = boto3.client("s3")
 
@@ -22,6 +25,8 @@ COLLECTION_NAME = "dnd_sessions"
 EMBED_MODEL = "text-embedding-3-small"  # low-cost, high-quality model
 client = None
 collection = None
+zip_timestamp = None
+current_chroma_path: str | None = None
 
 def unzip_file(zip_path, extract_to):
     """
@@ -36,18 +41,49 @@ def unzip_file(zip_path, extract_to):
     print(f"Unzipped {zip_path} → {extract_to}")
 
 def init():
-    global client, collection
-    if client is not None and collection is not None:
+    global client, collection, zip_timestamp, current_chroma_path
+    should_not_init = False
+    if client is not None and collection is not None and zip_timestamp is not None and current_chroma_path is not None:
+        response = s3.head_object(
+            Bucket=S3_BUCKET,
+            Key="chromadb.zip",
+        )
+        last_modified = response['LastModified']
+        if zip_timestamp >= last_modified:
+            should_not_init = True
+        else:
+            zip_timestamp = last_modified
+    if should_not_init:
         print("Already initialized, skipping initialization portion")
         return
     print("Initializing...")
 
+    # Kill references
+    client = None
+    collection = None
+
+    if current_chroma_path is not None and os.path.exists(current_chroma_path):
+        for root, dirs, files in os.walk(current_chroma_path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+    if os.path.exists("/tmp/chromadb.zip"):
+        os.remove("/tmp/chromadb.zip")
+
+    response = s3.head_object(
+        Bucket=S3_BUCKET,
+        Key="chromadb.zip",
+    )
+    zip_timestamp = response['LastModified']
+
     s3.download_file(S3_BUCKET, "chromadb.zip", "/tmp/chromadb.zip")
-    unzip_file("/tmp/chromadb.zip", CHROMA_PATH)
+    current_chroma_path = CHROMA_PATH + "_" + str(int(time.time()))
+    unzip_file("/tmp/chromadb.zip", current_chroma_path)
 
     # Initialize clients
     client = OpenAI(api_key=OPENAI_API_KEY)
-    chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+    chroma_client = chromadb.PersistentClient(path=current_chroma_path)
     embed_fn = embedding_functions.OpenAIEmbeddingFunction(
         api_key=OPENAI_API_KEY,
         model_name=EMBED_MODEL,

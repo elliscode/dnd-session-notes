@@ -1,4 +1,5 @@
 import json
+import time
 import traceback
 import glob
 import hashlib
@@ -17,9 +18,10 @@ STARTING_FILE = "dnd_rag_ingest.STARTING"
 s3 = boto3.client("s3")
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
-
+CHROMA_ZIP = "/tmp/chromadb.zip"
 DATA_FOLDER = "/tmp/session-notes/"
 CHROMA_PATH = "/tmp/chroma_data/"
+CHROMA_SNAPSHOT_ZIP = "/tmp/chroma_snapshot.zip"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
@@ -77,30 +79,6 @@ def download_s3_directory(bucket, prefix, local_path="/tmp"):
             s3.download_file(bucket, key, local_file_path)
             print(f"Downloaded: s3://{bucket}/{key} → {local_file_path}")
 
-def init():
-    print("Initializing...")
-    s3.put_object(Bucket=S3_BUCKET, Key=STARTING_FILE, Body=b"")
-
-    download_s3_directory(S3_BUCKET, "session-notes/", DATA_FOLDER)
-    s3.download_file(S3_BUCKET, "chromadb.zip", "/tmp/chromadb.zip")
-    unzip_file("/tmp/chromadb.zip", CHROMA_PATH)
-
-    # Initialize clients
-    chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-    embed_fn = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=OPENAI_API_KEY,
-        model_name=EMBED_MODEL,
-    )
-
-    collection = chroma_client.get_or_create_collection(
-        name=COLLECTION_NAME,
-        embedding_function=embed_fn,
-    )
-
-    s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
-
-    return collection
-
 # Helper to chunk text
 def chunk_text(text, chunk_size=300, overlap=75):
     tokens = get_encoding("cl100k_base").encode(text)
@@ -122,69 +100,110 @@ def lambda_handler(event, context):
     try:
         print(json.dumps(event))
         print(context)
-        collection = init()
+        if 'Contents' in s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=STARTING_FILE, MaxKeys=1):
+            message = 'Already running, skipping this invocation...'
+            print(message)
+            return {
+                'statusCode': 201,
+                'body': json.dumps({'message': message})
+            }
 
-        # Load existing IDs to avoid re-uploading
-        existing_docs = {m["file_id"]: m for m in collection.get()["metadatas"]} if collection.count() > 0 else {}
+        s3.put_object(Bucket=S3_BUCKET, Key=STARTING_FILE, Body=b"")
 
-        # Process all markdown files
-        md_files = glob.glob(os.path.join(DATA_FOLDER, "**/*.md"), recursive=True)
-        print(md_files)
-        added_chunks = 0
+        print("Initializing...")
 
-        file_ids = []
-        for file_path in md_files:
-            file_name = file_path.removeprefix(DATA_FOLDER)
-            file_id = file_name + file_hash(file_path)
-            file_ids.append(file_id)
-            if file_id in existing_docs:
-                print(f"Skipping {file_name} (already embedded)")
-                continue
+        current_chroma_path = CHROMA_PATH + "_" + str(int(time.time()))
+        download_s3_directory(S3_BUCKET, "session-notes/", DATA_FOLDER)
+        s3.download_file(S3_BUCKET, "chromadb.zip", CHROMA_ZIP)
+        unzip_file(CHROMA_ZIP, current_chroma_path)
 
-            with open(file_path, "r", encoding="utf-8") as f:
-                text = f.read()
+        # Initialize clients
+        try:
+            chroma_client = chromadb.PersistentClient(path=current_chroma_path)
+            embed_fn = embedding_functions.OpenAIEmbeddingFunction(
+                api_key=OPENAI_API_KEY,
+                model_name=EMBED_MODEL,
+            )
 
-            chunks = chunk_text(text)
-            ids = [f"{file_id}_{i}" for i in range(len(chunks))]
-            metadatas = [{"file_id": file_id, "source": file_name, "chunk": i} for i in range(len(chunks))]
+            collection = chroma_client.get_or_create_collection(
+                name=COLLECTION_NAME,
+                embedding_function=embed_fn,
+            )
 
-            if len(chunks) > 0:
-                collection.upsert(
-                    documents=chunks,
-                    ids=ids,
-                    metadatas=metadatas
-                )
+            # Load existing IDs to avoid re-uploading
+            existing_docs = {m["file_id"]: m for m in collection.get()["metadatas"]} if collection.count() > 0 else {}
 
-            print(f"✅ Added {len(chunks)} chunks from {file_name}")
-            added_chunks += len(chunks)
+            # Process all markdown files
+            md_files = glob.glob(os.path.join(DATA_FOLDER, "**/*.md"), recursive=True)
+            print(md_files)
+            added_chunks = 0
 
-        ids_to_delete = []
-        results = collection.get(include=["metadatas"])
-        for i, meta in enumerate(results["metadatas"]):
-            if not meta:
-                continue
-            # print(meta['file_id'])
-            if meta['file_id'] not in file_ids:
-                ids_to_delete.append(results["ids"][i])
-        # Step 4. Delete them
-        if ids_to_delete:
-            print(f"🗑️ Deleting {len(ids_to_delete)} entries (stale files removed from sessions/)")
-            collection.delete(ids=ids_to_delete)
-        else:
-            print("✅ No stale entries to delete.")
+            file_ids = []
+            for file_path in md_files:
+                file_name = file_path.removeprefix(DATA_FOLDER)
+                file_id = file_name + file_hash(file_path)
+                file_ids.append(file_id)
+                if file_id in existing_docs:
+                    print(f"Skipping {file_name} (already embedded)")
+                    continue
 
-        print(f"\n🎉 Done. {added_chunks} new chunks embedded and stored in '{COLLECTION_NAME}'.")
-        print(f"Total records in collection: {collection.count()}")
+                with open(file_path, "r", encoding="utf-8") as f:
+                    text = f.read()
 
-        # Step 2 — ZIP updated Chroma snapshot
-        zip_file = "/tmp/chroma_snapshot.zip"
-        zip_directory("/tmp/chroma_data", zip_file)
+                chunks = chunk_text(text)
+                ids = [f"{file_id}_{i}" for i in range(len(chunks))]
+                metadatas = [{"file_id": file_id, "source": file_name, "chunk": i} for i in range(len(chunks))]
+
+                if len(chunks) > 0:
+                    collection.upsert(
+                        documents=chunks,
+                        ids=ids,
+                        metadatas=metadatas
+                    )
+
+                print(f"✅ Added {len(chunks)} chunks from {file_name}")
+                added_chunks += len(chunks)
+
+            ids_to_delete = []
+            results = collection.get(include=["metadatas"])
+            for i, meta in enumerate(results["metadatas"]):
+                if not meta:
+                    continue
+                # print(meta['file_id'])
+                if meta['file_id'] not in file_ids:
+                    ids_to_delete.append(results["ids"][i])
+            # Step 4. Delete them
+            if ids_to_delete:
+                print(f"🗑️ Deleting {len(ids_to_delete)} entries (stale files removed from sessions/)")
+                collection.delete(ids=ids_to_delete)
+            else:
+                print("✅ No stale entries to delete.")
+
+            print(f"\n🎉 Done. {added_chunks} new chunks embedded and stored in '{COLLECTION_NAME}'.")
+            print(f"Total records in collection: {collection.count()}")
+
+            # Step 2 — ZIP updated Chroma snapshot
+            zip_directory(current_chroma_path, CHROMA_SNAPSHOT_ZIP)
+        except:
+            traceback.print_exc()
 
         # Step 3 — Upload the ZIP back to S3
-        s3.upload_file(zip_file, S3_BUCKET, "chromadb.zip")
-        print(f"Uploaded {zip_file} → s3://daniel-townsend-dnd-notes-userspace/chromadb.zip")
+        s3.upload_file(CHROMA_SNAPSHOT_ZIP, S3_BUCKET, "chromadb.zip")
+        print(f"Uploaded {CHROMA_SNAPSHOT_ZIP} → s3://daniel-townsend-dnd-notes-userspace/chromadb.zip")
+        s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
+
+        # Step 4 - Delete old chroma stuff
+        for root, dirs, files in os.walk(current_chroma_path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+        if os.path.exists(CHROMA_ZIP):
+            os.remove(CHROMA_ZIP)
+        if os.path.exists(CHROMA_SNAPSHOT_ZIP):
+            os.remove(CHROMA_SNAPSHOT_ZIP)
 
         return {"statusCode": 200, "body": f"Updated the chromadb files and changed the environment variable in the dnd_rag_api, you should be good to go now"}
     except Exception:
         traceback.print_exc()
+        s3.delete_object(Bucket=S3_BUCKET, Key=STARTING_FILE)
+
         return {"statusCode": 500, "body": f"Internal server error"}
