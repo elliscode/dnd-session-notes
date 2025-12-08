@@ -1,0 +1,21 @@
+[project]
+name = "dnd-summary-gemini"
+version = "0.1.0"
+description = ""
+requires-python = "==3.14.*"
+dependencies = [
+    "boto3>=1.40.4",
+    "google-genai>=1.53.0",
+]
+
+[dependency-groups]
+dev = [
+    "black",
+]
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+
+
+[tool.black]
+line-length = 120

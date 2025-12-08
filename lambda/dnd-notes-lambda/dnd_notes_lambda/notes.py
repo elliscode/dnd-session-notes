@@ -12,6 +12,9 @@ from .utils import (
     time,
     re,
 )
+from .input_validation import (
+    validate_date
+)
 import html
 import traceback
 
@@ -267,6 +270,72 @@ def set_note_route(event, user_data, body):
         event=event,
         http_code=200,
         body=output,
+    )
+
+
+@authenticate
+def get_summary_gemini_route(event, user_data, body):
+    date = validate_date(body.get('date'))
+    if not date:
+        return format_response(
+            event=event,
+            http_code=400,
+            body={
+                "time": time_value,
+                "query": question,
+                "response": response_text,
+                "model": "Gemini",
+            }
+        )
+    status_code = 500
+    summary = f"Summary could not be generated for the date ${date}"
+    time_value = int(time.time())
+    try:
+        question = body["query"]
+        resp = lambda_client.invoke(
+            FunctionName="dnd-notes-summary",
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"body": {"user": user_data['key2'], "date": date}})
+        )
+        response_body = json.loads(resp["Payload"].read().decode())
+        print(f'User: {user_data["key2"]} -- Query: {question} -- Response: {response_body["body"]}')
+        status_code = response_body["statusCode"]
+        response_json = json.loads(response_body["body"])
+        response_text = ''
+        if 'response' in response_json:
+            response_text += response_json['response']
+        if 'message' in response_json:
+            response_text += response_json['message']
+        if 'sources' in response_json:
+            response_text += "\n\n## Sources"
+            for source in response_json.get("sources", []):
+                response_text += f"\n* {source}"
+        # write to DB
+        completion_data = {
+            "key1": "completion",
+            "key2": f'{user_data["key2"]}#{time_value}',
+            "user": user_data["key2"],
+            "time": int(time.time()),
+            "query": question,
+            "response": response_text,
+            "expiration": int(time.time()) + (60 * 60 * 24 * 30),
+            "model": "Gemini",
+        }
+        dynamo.put_item(
+            TableName=TABLE_NAME,
+            Item=python_obj_to_dynamo_obj(completion_data),
+        )
+    except:
+        traceback.print_exc()
+    return format_response(
+        event=event,
+        http_code=status_code,
+        body={
+            "time": time_value,
+            "query": question,
+            "response": response_text,
+            "model": "Gemini",
+        }
     )
 
 
