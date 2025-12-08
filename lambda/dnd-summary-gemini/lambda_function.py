@@ -36,7 +36,8 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 def lambda_handler(event, context):
-    query = None
+    date = None
+    file_paths = []
     try:
         logger.info(json.dumps(event))
         logger.info(context)
@@ -91,36 +92,29 @@ def lambda_handler(event, context):
 
         # --- 1. Upload Files ---
         print("\n⬆️ Uploading files...")
-        uploaded_files = []
 
         # We will also track the files we need to include in the final prompt.
         prompt_parts = []
 
         for file_path in file_paths:
             if not os.path.exists(file_path):
-                print(f"⚠️ File not found: {file_path}. Skipping upload.")
+                print(f"⚠️ File not found: {file_path}. Skipping add...")
                 continue
 
-            print(f"   - Uploading: {file_path}")
-
-            # Determine the MIME type
-            mime_type = 'text/markdown'
-
-            print(f"   - Uploading: {file_path} (MIME: {mime_type})")
+            print(f"   - Adding: {file_path}")
 
             # Pass the mime_type argument to the upload call
-            file = client.files.upload(file=file_path, config={'mime_type': mime_type})
-
-            uploaded_files.append(file)
 
             # Add the file reference itself to the list of prompt parts
-            prompt_parts.append(file)
+            with open(file_path, 'r') as f:
+                prompt_parts.append(f"""
+--- {os.path.basename(file_path)} start ---
+{f.read()}
+--- {os.path.basename(file_path)} end ---
+""")
 
-            # Add a descriptive label to the prompt for context
-            prompt_parts.append(f"\n--- {os.path.basename(file_path)} ---\n")
-
-        if not uploaded_files:
-            print("\n🛑 No files were successfully uploaded. Aborting.")
+        if not prompt_parts:
+            print("\n🛑 No files were successfully read. Aborting.")
             return
 
         # --- 2. Construct the Full Prompt and Call the API ---
@@ -131,7 +125,8 @@ def lambda_handler(event, context):
 
         # Configuration for the API call
         config = types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION
+            system_instruction=SYSTEM_INSTRUCTION,
+            temperature=2.0,
         )
 
         response = client.models.generate_content(
@@ -144,13 +139,6 @@ def lambda_handler(event, context):
 
         for file_path in file_paths:
             os.remove(file_path)
-
-
-        print("\n🗑️ Cleaning up uploaded files...")
-        for file in uploaded_files:
-            # Delete the file from the Gemini API service
-            client.files.delete(name=file.name)
-            print(f"   - Deleted: {file.display_name}")
 
         return {
             'statusCode': 200,
@@ -167,9 +155,11 @@ def lambda_handler(event, context):
     except Exception as e:
         error_msg = f"An unexpected error occurred: {e}"
         logging.error(error_msg)
+    for file_path in file_paths:
+        os.remove(file_path)
     return {
         'statusCode': 200,
-        'body': json.dumps({"message": error_msg, "query": query})
+        'body': json.dumps({"message": error_msg, "date": date})
     }
 
 if __name__ == '__main__':
@@ -181,7 +171,7 @@ if __name__ == '__main__':
         mock_event = {"body": {"date": "2025-11-25", "user": "5556152345"}}
         mock_context = {}
 
-        logger.info(f"--- Calling get_completion_gemini_route with query: '{mock_event['body']}' ---")
+        logger.info(f"--- Calling get_completion_gemini_route with body: '{mock_event['body']}' ---")
 
         result = lambda_handler(mock_event, mock_context)
 

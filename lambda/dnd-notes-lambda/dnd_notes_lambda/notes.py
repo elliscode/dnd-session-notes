@@ -173,6 +173,40 @@ def get_previous_queries_route(event, user_data, body):
         body=output,
     )
 
+
+@authenticate
+def get_previous_summaries_route(event, user_data, body):
+    response = dynamo.query(
+        TableName=TABLE_NAME,
+        KeyConditions={
+            "key1": {"AttributeValueList": [{"S": "summary"}], "ComparisonOperator": "EQ"},
+            "key2": {
+                "AttributeValueList": [{"S": user_data["key2"]}],
+                "ComparisonOperator": "BEGINS_WITH",
+            },
+        },
+    )
+    output = []
+    if "Items" not in response:
+        return format_response(
+            event=event,
+            http_code=201,
+            body=output,
+        )
+    for item in response["Items"]:
+        python_item = dynamo_obj_to_python_obj(item)
+        output.append({
+            "time": int(python_item["time"]),
+            "date": python_item["date"],
+            "response": python_item["response"],
+            "model": python_item.get("model", "ChatGPT")
+        })
+    return format_response(
+        event=event,
+        http_code=200,
+        body=output,
+    )
+
 @authenticate
 def get_note_route(event, user_data, body):
     filename = validate_filename(body["filename"])
@@ -274,31 +308,30 @@ def set_note_route(event, user_data, body):
 
 
 @authenticate
-def get_summary_gemini_route(event, user_data, body):
+def generate_summary_gemini_route(event, user_data, body):
     date = validate_date(body.get('date'))
+    status_code = 500
+    response_text = f"Summary could not be generated for the date ${date}"
+    time_value = int(time.time())
     if not date:
         return format_response(
             event=event,
             http_code=400,
             body={
                 "time": time_value,
-                "query": question,
+                "date": date,
                 "response": response_text,
                 "model": "Gemini",
             }
         )
-    status_code = 500
-    summary = f"Summary could not be generated for the date ${date}"
-    time_value = int(time.time())
     try:
-        question = body["query"]
         resp = lambda_client.invoke(
-            FunctionName="dnd-notes-summary",
+            FunctionName="dnd-summary-gemini",
             InvocationType="RequestResponse",
             Payload=json.dumps({"body": {"user": user_data['key2'], "date": date}})
         )
         response_body = json.loads(resp["Payload"].read().decode())
-        print(f'User: {user_data["key2"]} -- Query: {question} -- Response: {response_body["body"]}')
+        print(f'User: {user_data["key2"]} -- Date: {date} -- Response: {response_body["body"]}')
         status_code = response_body["statusCode"]
         response_json = json.loads(response_body["body"])
         response_text = ''
@@ -306,17 +339,13 @@ def get_summary_gemini_route(event, user_data, body):
             response_text += response_json['response']
         if 'message' in response_json:
             response_text += response_json['message']
-        if 'sources' in response_json:
-            response_text += "\n\n## Sources"
-            for source in response_json.get("sources", []):
-                response_text += f"\n* {source}"
         # write to DB
         completion_data = {
-            "key1": "completion",
+            "key1": "summary",
             "key2": f'{user_data["key2"]}#{time_value}',
             "user": user_data["key2"],
             "time": int(time.time()),
-            "query": question,
+            "date": date,
             "response": response_text,
             "expiration": int(time.time()) + (60 * 60 * 24 * 30),
             "model": "Gemini",
@@ -332,7 +361,7 @@ def get_summary_gemini_route(event, user_data, body):
         http_code=status_code,
         body={
             "time": time_value,
-            "query": question,
+            "date": date,
             "response": response_text,
             "model": "Gemini",
         }

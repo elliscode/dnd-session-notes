@@ -87,6 +87,7 @@ def lambda_handler(event, context):
                 "When answering questions about 'who', try to figure out which characters were involved"
                 "When formatting your answers, prefer markdown formatting and bulleted lists"
                 "When answering questions about abilities, reference the filenames with 'sheets' in them"
+                "If you deem a source to be unrelated, please ignore it and do not reference it in your output."
             ),
             temperature=2.0,
         )

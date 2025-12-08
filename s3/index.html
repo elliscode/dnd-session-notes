@@ -976,6 +976,11 @@ option {
 .dark .select-label span {
   color:#ffffff;
 }
+#summary-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
   </style>
 </head>
 
@@ -996,7 +1001,7 @@ option {
     <div for="notes-panel" class="panel-button" id="notes-nav" onclick="switchPanel(event);">
       <span><img src="book.png"/></span>
     </div>
-    <div style="display:none;" for="summary-panel" class="panel-button" id="summary-nav" onclick="switchPanel(event);">
+    <div for="summary-panel" class="panel-button" id="summary-nav" onclick="switchPanel(event);">
       <span><img src="wand-book.png"/></span>
     </div>
   </div> <!---->
@@ -1074,31 +1079,33 @@ option {
       <h1>D&D Session Summary</h1>
       <h2>Turn the notes from a recent session into a summary</h2>
     </div>
-    <div class="card" id="session-summary-select">
-      <div style="display:flex;flex-direction:column;">
-        <p style="margin-top:0;">Choose a date to summarize:</p>
-        <div class="custom-select-wrapper">
-          <select id="generate-summary-date-select">
-          </select>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center; margin-top:16px;">
-          <button>Generate</button>
+    <div id="summary-wrapper">
+      <div class="card" id="session-summary-select">
+        <div style="display:flex;flex-direction:column;">
+          <p style="margin-top:0;">Choose a date to summarize:</p>
+          <div class="custom-select-wrapper">
+            <select id="generate-summary-date-select">
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center; margin-top:16px;">
+            <button id="summary-button" onclick="generateSummary(event);">Generate</button>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="lds-spinner" style="display:none;">
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
+      <div class="lds-spinner" style="display:none;">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
     </div>
   </div>
 
@@ -1146,6 +1153,10 @@ const deleteModalBg = document.getElementById('delete-modal-bg');
 const deleteFilename = document.getElementById('delete-filename');
 const generateSummaryDateSelect = document.getElementById('generate-summary-date-select');
 const modelChoice = document.getElementById('model-choice');
+const summaryButton = document.getElementById('summary-button');
+const summaryPanel = document.getElementById('summary-panel');
+const sessionSummarySelect = document.getElementById('session-summary-select');
+const summaryWrapper = document.getElementById('summary-wrapper');
 let noteResponse = undefined;
 let hideTimeout = undefined;
 let panelOpened = 'add';
@@ -1216,6 +1227,7 @@ async function submitCode(event) {
     showUi(true, phoneNumber.value);
     loadPreviousQueries();
     loadNotesList();
+    getPreviousSummaries();
   } else {
     try {
       const data = await response.json();
@@ -1259,6 +1271,7 @@ async function changeUiBasedOnLoginState() {
       showUi(true, data.phone);
       loadPreviousQueries();
       loadNotesList();
+      getPreviousSummaries();
     } catch {
       displayError("Error parsing the response, please log in again");
       generateCodeDiv.style.display = 'flex';
@@ -1279,7 +1292,7 @@ async function loadPreviousQueries() {
     try {
       const data = await response.json();
       for (let item of data) {
-        appendCard(item.query, item.response, item.model);
+        appendCard(chatPanel, chatBox, item.query, item.response, item.model);
       }
     } catch {
       displayError("Failed to get previous queries");
@@ -1384,6 +1397,60 @@ function removeContent() {
   Array.from(document.querySelectorAll(`#notes-list .selected`)).forEach(x=>x.classList.remove('selected'));
   noteContent.innerHTML = '';
 }
+async function generateSummary(event) {
+  event.preventDefault();
+  if (summaryButton.disabled) {
+    return;
+  }
+  summaryButton.disabled = true;
+  generateSummaryDateSelect.disabled = true;
+  loadingWheels.forEach(x=>x.style.display = 'block');
+  let response = await fetch(`https://api.dnd.elliscode.com/generate-summary-gemini`, {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      date: generateSummaryDateSelect.value
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    const data = await response.json();
+    appendCard(summaryPanel, summaryWrapper, data.date, data.response, data.model);
+    loadingWheels.forEach(x=>x.style.display = 'none');
+    summaryButton.disabled = false;
+    generateSummaryDateSelect.disabled = false;
+  } else {
+    try {
+      const data = await response.json();
+      displayError(data.message);
+    } catch {
+      displayError("Unknown error logging in, please contact the administrator.");
+    }
+  }
+
+  summaryButton.disabled = false;
+}
+async function getPreviousSummaries(event) {
+  let response = await fetch('https://api.dnd.elliscode.com/get-previous-summaries', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      for (let item of data) {
+        appendCard(summaryPanel, summaryWrapper, item.date, item.response, item.model);
+      }
+    } catch {
+      displayError("Failed to get previous queries");
+    }
+  } else {
+    displayError("Failed to get previous queries");
+  }
+}
 async function handleChatSubmit(event) {
   event.preventDefault();
   if (chatText.disabled || chatButton.disabled) {
@@ -1412,7 +1479,7 @@ async function handleChatSubmit(event) {
   });
   if (200 <= response.status && response.status < 300) {
     const data = await response.json();
-    appendCard(data.query, data.response, data.model);
+    appendCard(chatPanel, chatBox, data.query, data.response, data.model);
     loadingWheels.forEach(x=>x.style.display = 'none');
     chatText.value = '';
     chatText.disabled = false;
@@ -1427,17 +1494,24 @@ async function handleChatSubmit(event) {
     }
   }
 }
-function appendCard(question, answer, model) {
+function appendCard(parent, sibling, question, answer, model) {
   {
     let div = document.createElement('div');
     div.classList.add('card');
     div.classList.add('column');
     let topBarDiv = document.createElement('div');
     topBarDiv.classList.add('top-bar');
-    let questionDiv = document.createElement('span');
-    questionDiv.classList.add('question');
-    questionDiv.innerText = question;
-    topBarDiv.appendChild(questionDiv);
+    if (parent.id == 'summary-panel') {
+      let button = document.createElement('button');
+      button.innerText = "Copy markdown";
+      button.addEventListener('click', (event)=>{copyMarkdown(event, answer);});
+      topBarDiv.appendChild(button);
+    } else {
+      let questionDiv = document.createElement('span');
+      questionDiv.classList.add('question');
+      questionDiv.innerText = question;
+      topBarDiv.appendChild(questionDiv);
+    }
     let modelDiv = document.createElement('span');
     modelDiv.classList.add('model');
     modelDiv.innerText = model;
@@ -1450,8 +1524,15 @@ function appendCard(question, answer, model) {
       answerDiv.innerText = answer;
     }
     div.appendChild(answerDiv);      
-    chatPanel.insertBefore(div, chatBox.nextElementSibling);
+    parent.insertBefore(div, sibling.nextElementSibling);
   }
+}
+function copyMarkdown(event, markdownText) {
+  navigator.clipboard.writeText(markdownText);
+  event.target.innerText = 'Copied!';
+  setTimeout(()=>{
+    event.target.innerText = 'Copy Markdown';
+  }, 3000);
 }
 function switchMode(event) {
   if (event.target == lightButton) {
