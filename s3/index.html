@@ -1330,6 +1330,12 @@ function clearNoteList() {
   while(notesList.firstElementChild) {
     notesList.firstElementChild.remove();
   }
+  while(datesFound.length > 0) {
+    datesFound.pop();
+  }
+  while(generateSummaryDateSelect.firstElementChild) {
+    generateSummaryDateSelect.firstElementChild.remove();
+  }
 }
 function appendNoteToList(noteFileName) {
   {

@@ -13,7 +13,7 @@ from google.genai import types
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
 S3_PREFIX = os.environ.get("S3_PREFIX")
-S3_PENDING = os.path.join(S3_PREFIX, ".pending")
+S3_PENDING = os.path.join("gemini.pending")
 FILE_SEARCH_STORE_NAME = os.environ.get("FILE_SEARCH_STORE_NAME")
 LAMBDA_TASK_ROOT = os.environ.get("LAMBDA_TASK_ROOT")
 HASH_CHUNK_SIZE = 4096
