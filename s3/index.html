@@ -508,7 +508,6 @@ input, textarea {
   position: relative;
   display: block;
   padding: 10px 15px;
-  background-color: #444;
   font-family: monospace;
 }
 .search-content {
@@ -1128,9 +1127,27 @@ option {
 }
 .highlight {
   background-color:rgba(98, 86, 255, 0.716);
+  border-radius: 4px;
+}
+.highlight:hover {
+  background-color:rgba(115, 105, 255, 0.716);
 }
 #replace-button {
-  cursor:not-allowed;
+  cursor:pointer;
+}
+.filename {
+  background-color: #eee;
+}
+.filename:hover {
+  background-color:#ddd;
+  cursor:pointer;
+}
+.dark .filename {
+  background-color: #444;
+}
+.dark .filename:hover {
+  background-color:#555;
+  cursor:pointer;
 }
   </style>
 </head>
@@ -1226,9 +1243,6 @@ option {
         ><label><input id="case-sensitive" type="checkbox"><span>Aa</span></label><label><input id="whole-word" type="checkbox"><span>W</span></label><label><input id="regex" type="checkbox"><span>.*</span></label
         ></div><button id="find-button" onclick="performFind(event);">Find</button>
       </div>
-      <!-- <div class="find-options">
-        <label><input id="case-sensitive" type="checkbox"><span>Case sensitive</span></label><label><input id="whole-word" type="checkbox"><span>Whole word</span></label><label><input id="regex" type="checkbox"><span>Regex</span></label>
-      </div> -->
       <div class="find-replace-bar replace">
         <label for="replace-input">Replace: </label><input type="text" id="replace-input"/><button id="replace-button" onclick="performReplace(event);">Replace</button>
       </div>
@@ -1934,12 +1948,15 @@ async function loadSearchResult(event) {
     try {
       const data = await response.json();
       try {
-        const keys = Object.keys(data)
+        const keys = Object.keys(data);
         for (let key of keys) {
           let searchResultDiv = document.createElement('div');
           searchResultDiv.classList.add('search-result');
           let fileNameSpan = document.createElement('span');
           fileNameSpan.classList.add('filename');
+          fileNameSpan.setAttribute('filename', key);
+          fileNameSpan.addEventListener('click', (event)=>{loadNote(event);switchPanel(event);});
+          fileNameSpan.setAttribute('for',"notes-panel");
           fileNameSpan.innerText = key;
           searchResultDiv.appendChild(fileNameSpan);
           searchResults.appendChild(searchResultDiv);
@@ -1983,7 +2000,31 @@ async function loadSearchResult(event) {
   }
 }
 async function performReplace(event) {
-  
+  let response = await fetch('https://api.dnd.elliscode.com/replace', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      find: findInput.value,
+      replace: replaceInput.value,
+      caseSensitive: caseSensitiveCheckbox.checked,
+      wholeWord: wholeWordCheckbox.checked,
+      regex: regexCheckbox.checked,
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      displayMessage(`Replaced ${data.replaceCount} instances`)
+    } catch {
+      displayError("Failed to perform replace");
+      switchPanel('notes-panel')
+    }
+  } else {
+    displayError("Failed to perform replace");
+      switchPanel('notes-panel')
+  }
+
 }
 changeUiBasedOnLoginState();
   </script>

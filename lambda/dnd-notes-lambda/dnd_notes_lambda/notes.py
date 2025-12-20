@@ -414,10 +414,43 @@ def find_route(event, user_data, body):
 
 @authenticate
 def replace_route(event, user_data, body):
+    find_term = body.get("find")
+    replace_term = body.get("replace")
+    case_sensitive = body.get("caseSensitive", False)
+    whole_word = body.get("wholeWord", False)
+    regex = body.get("regex", False)
+    if not find_term:
+        return format_response(
+            event=event,
+            http_code=400,
+            body="No find provided",
+        )
+    if not replace_term:
+        return format_response(
+            event=event,
+            http_code=400,
+            body="No replace provided",
+        )
+
+    if not regex:
+        find_term = re.escape(find_term)
+    if whole_word:
+        find_term = r"\b" + find_term + r"\b"
+    if case_sensitive:
+        pattern = re.compile(find_term)
+    else:
+        pattern = re.compile(find_term, re.IGNORECASE, )
+
+    load_cache(event)
+
+    output = replace_text(pattern, replace_term)
+
+    write_back_cache(event)
+
     return format_response(
         event=event,
         http_code=200,
-        body="Not implemented :("
+        body={"replaceCount": output},
     )
 
 @authenticate
@@ -426,8 +459,30 @@ def load_cache_route(event, user_data, body):
     return format_response(
         event=event,
         http_code=200,
-        body="Loaded cache successfully"
+        body="Loaded cache successfully",
     )
+
+
+def replace_text(pattern: re.Pattern, replacement):
+    output = 0
+    remaining_replacements = FIND_LIMIT
+    files_to_replace = {}
+    for name in file_cache.keys():
+        for _ in pattern.finditer(file_cache[name]['body']):
+            if name not in files_to_replace:
+                files_to_replace[name] = 0
+            files_to_replace[name] = files_to_replace[name] + 1
+            remaining_replacements -= 1
+            if remaining_replacements <= 0:
+                break
+        if remaining_replacements <= 0:
+            break
+    for name, count in files_to_replace.items():
+        file_cache[name]['body'] = pattern.sub(replacement, file_cache[name]['body'], count)
+        file_cache[name]['ETag'] = 'write-back'
+        output = output + count
+    return output
+
 
 
 def load_cache(event):
@@ -448,6 +503,15 @@ def load_cache(event):
                 }
     for key in existing_keys:
         file_cache.pop(key, None)
+
+def write_back_cache(event):
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=PREFIX):
+        for obj in page.get("Contents", []):
+            name = obj["Key"].removeprefix(PREFIX)
+            e_tag = obj["ETag"]
+            if name in file_cache and file_cache[name]["ETag"] != e_tag:
+                s3.put_object(Bucket=S3_BUCKET, Key=obj["Key"], Body=file_cache[name]["body"].encode('utf-8'))
 
 
 def find_text(pattern: re.Pattern):
