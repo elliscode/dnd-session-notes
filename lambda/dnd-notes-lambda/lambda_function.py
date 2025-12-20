@@ -21,6 +21,9 @@ from dnd_notes_lambda.notes import (
     delete_note_route,
     generate_summary_gemini_route,
     get_previous_summaries_route,
+    find_route,
+    replace_route,
+    load_cache_route,
 )
 
 
@@ -70,6 +73,12 @@ def route(event):
         return generate_summary_gemini_route(event)
     if path_equals(event=event, method="POST", path="/get-previous-summaries"):
         return get_previous_summaries_route(event)
+    if path_equals(event=event, method="POST", path="/find"):
+        return find_route(event)
+    if path_equals(event=event, method="POST", path="/replace"):
+        return replace_route(event)
+    if path_equals(event=event, method="POST", path="/load-cache"):
+        return load_cache_route(event)
     if path_equals(event=event, method="POST", path="/ping"):
         return format_response(
             event=event,

@@ -31,9 +31,6 @@ button {
   background-color: #ffffff00;
   cursor:pointer;
 }
-button:hover {
-  background-color: #eee;
-}
 button:active {
   background-color: #ddd;
 }
@@ -146,11 +143,11 @@ button:active {
 }
 
 label > *:last-child {
-  flex-grow: 1;
   font-size: 16px;
   border-radius: 20px;
   padding: 5px;
   text-align:center;
+  white-space: nowrap;
 }
 
 #controls {
@@ -242,15 +239,18 @@ input, textarea {
   color: white;
   cursor: pointer;
 }
-.input-wrapper button:hover {
+.input-wrapper button:hover:not(:disabled) {
   background-color: #5d5d5d;
+}
+.input-wrapper button:hover:disabled {
+  cursor: wait;
 }
 
 .shrunk {
   width: 40px;
 }
 
-#error {
+#message {
   display:flex;
   justify-content: center;
   position:fixed;
@@ -260,11 +260,20 @@ input, textarea {
   pointer-events:none;
 }
 
-#error-text {
-  background-color:rgb(255, 172, 172);
+#message-text {
   padding:2em;
-  border: 2px solid red;
   border-radius: 1em;
+}
+
+.message {
+  background-color:rgb(172, 230, 255);
+  border: 2px solid rgb(0, 204, 255);
+  color: rgb(0, 51, 139);
+}
+
+.error {
+  background-color:rgb(255, 172, 172);
+  border: 2px solid red;
   color: rgb(139, 0, 0);
 }
 
@@ -380,6 +389,7 @@ input, textarea {
   position: fixed;
   top: 5px;
   right: 5px;
+  z-index: 100;
 }
 #note-content {
   box-sizing:border-box;
@@ -455,10 +465,72 @@ input, textarea {
   border: 1px solid;
   border-radius: 10px;
 }
+.find-replace-bar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.find-replace-bar input[type="text"] {
+  flex-grow:1;
+}
+.find-replace-bar label span:hover {
+  background-color:#444;
+  cursor:pointer;
+}
+.find-replace-bar label input[type="checkbox"] {
+  display:none;
+}
+.find-replace-bar label span {
+  display:block;
+}
+.find-replace-bar label input[type="checkbox"]:checked + span {
+  background-color:#555;
+}
+.find-options {
+  display:flex;
+}
+.find-options label {
+  display:flex;
+  flex-direction:row;
+  border: 1px solid #888;
+  margin: 2px;
+  padding: 2px 15px;
+  border-radius: 10px;
+}
+#search-results {
+  width: 100%;
+  flex-direction:column;
+}
+.search-result {
+  position:relative;
+}
+.filename {
+  position: relative;
+  display: block;
+  padding: 10px 15px;
+  background-color: #444;
+  font-family: monospace;
+}
+.search-content {
+  position: relative;
+  display: block;
+  border-radius: 5px;
+  padding: 10px 20px;
+}
+.search-result .search-content:nth-child(odd) {
+  background-color:#282828;
+}
+.search-result .search-content:nth-child(even) {
+  background-color:#222;
+}
+#search-panel > div {
+  width:100%;
+}
+.search-controls {
+  display: flex;
+  flex-direction: row;
+}
 @media screen and (max-width:385px) {
-  body {
-    line-break:anywhere;
-  }
   .login, .card {
     padding: 5px;
     border-radius: 20px;
@@ -468,11 +540,13 @@ input, textarea {
     margin: 10px;
   }
   .header {
-    margin-top: 3em;
     align-items: start;
   }
+  .header.main {
+    margin-top: 3em;
+  }
   .header h1 {
-    font-size:xx-large;
+    font-size:x-large;
   }
   .header h2 {
     font-size:medium;
@@ -549,6 +623,21 @@ input, textarea {
   label > *:last-child {
     margin-left: 0;
   }
+  .find-replace-bar {
+    flex-direction: column;
+    padding: 0px 10px;
+    box-sizing: border-box;
+  }
+  .find-replace-bar input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+  }
+  .find-options {
+    flex-direction:column;
+  }
+  .card > div > * {
+    word-break: break-word;
+  }
 }
 @media screen and (min-width:386px) and (max-width:650px) {
   .login, .card {
@@ -579,6 +668,7 @@ input, textarea {
   }
   input[type="text"], textarea {
     padding: 0.5em 1em;
+    min-width:1px;
   }
   .login {
     width: 300px;
@@ -627,8 +717,17 @@ input, textarea {
   .select-label {
     flex-direction:row;
   }
-  label > *:last-child {
-    margin-left: 10px;
+  .find-replace-bar {
+    flex-direction: row;
+    gap: 10px;
+    padding: 0px 10px;
+    box-sizing: border-box;
+  }
+  .find-options {
+    flex-direction:column;
+  }
+  .card > div > * {
+    word-break: break-word;
   }
 }
 @media screen and (min-width:651px) {
@@ -727,8 +826,35 @@ input, textarea {
   .select-label {
     flex-direction:row;
   }
+  .find-replace-bar {
+    flex-direction: row;
+    gap: 10px;
+  }
+  #search-panel {
+    margin: 20px 20px 20px 70px;
+    width: calc(100% - 90px);
+  }
+  #search-panel > div {
+    border: 1px solid #888;
+    border-radius: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #282828;
+    max-width:800px;
+    width:100%;
+  }
+  .find-options {
+    flex-direction:row;
+    justify-content: space-evenly;
+  }
+  #search-results {
+    border-radius:20px;
+    overflow:hidden;
+    border: 1px solid #888;
+    margin-top:20px;
+  }
   label > *:last-child {
-    margin-left: 10px;
+    flex-grow: 1;
   }
 }
 body.dark {
@@ -795,8 +921,18 @@ button, .login, .card {
   background-color:#121214;
   color: #ccc;
 }
-.dark button:hover {
+button:hover:not(:disabled) {
+  background-color: #eee;
+}
+.dark button:hover:not(:disabled) {
   background-color:#35353a;
+}
+button:hover:disabled {
+  cursor: wait;
+}
+button:disabled, input:disabled {
+  color:#888;
+  border-color:#888;
 }
 .dark #profile-menu div:hover {
   background-color: #35353a;
@@ -981,6 +1117,15 @@ option {
   flex-direction: column;
   align-items: center;
 }
+#search-panel {
+  color: black;
+}
+.dark #search-panel {
+  color: white;
+}
+.highlight {
+  background-color:rgba(98, 86, 255, 0.716);
+}
   </style>
 </head>
 
@@ -1011,7 +1156,7 @@ option {
       <span id="profile-name">Ellis</span>
       <div id="profile-icon" onclick="toggleProfileMenu(event);"></div>
     </div>
-    <div class="header">
+    <div class="header main">
       <h1>Legend Lore</h1>
       <h2>D&D Campaign notes with intelligent search</h2>
     </div>
@@ -1058,9 +1203,45 @@ option {
     <div id="notes-list"></div>
     <div id="note-content"></div>
     <div id="note-controls">
+      <button for="search-panel" id="add-note" onclick="clearNoteFormPanel(event);switchPanel(event);">Find</button>
       <button for="note-form-panel" id="add-note" onclick="clearNoteFormPanel(event);switchPanel(event);">Add</button>
       <button for="note-form-panel" id="edit-note" onclick="loadNoteFormPanel(event);switchPanel(event);">Edit</button>
       <button for="delete-panel" id="delete-note" onclick="showDeleteModal(event);">Delete</button>
+    </div>
+  </div>
+
+  <div class="panel" id="search-panel" style="display:none;flex-direction:column;">
+    <div>
+      <div class="header">
+        <h1>Find<span class="replace"> &amp; Replace</span></h1>
+      </div>
+      <div class="find-replace-bar">
+        <label for="find-input">Find: </label><input type="text" id="find-input"/><div class="search-controls"
+        ><label><input id="case-sensitive" type="checkbox"><span>Aa</span></label><label><input id="whole-word" type="checkbox"><span>W</span></label><label><input id="regex" type="checkbox"><span>.*</span></label
+        ></div><button id="find-button" onclick="performFind(event);">Find</button>
+      </div>
+      <!-- <div class="find-options">
+        <label><input id="case-sensitive" type="checkbox"><span>Case sensitive</span></label><label><input id="whole-word" type="checkbox"><span>Whole word</span></label><label><input id="regex" type="checkbox"><span>Regex</span></label>
+      </div> -->
+      <div class="find-replace-bar replace">
+        <label for="replace-input">Replace: </label><input type="text" id="replace-input"/><button id="replace-button" onclick="performReplace(event);">Replace</button>
+      </div>
+      <button class="close" for="notes-panel" onclick="switchPanel(event);">&times;</button>    
+      <div class="lds-spinner" style="display:none;">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <div id="search-results" style="display:none;"></div>
     </div>
   </div>
 
@@ -1082,7 +1263,7 @@ option {
     <div id="summary-wrapper">
       <div class="card" id="session-summary-select">
         <div style="display:flex;flex-direction:column;">
-          <p style="margin-top:0;">Choose a date to summarize:</p>
+          <p style="margin-top:0;">Choose a date:</p>
           <div class="custom-select-wrapper">
             <select id="generate-summary-date-select">
             </select>
@@ -1109,8 +1290,8 @@ option {
     </div>
   </div>
 
-  <div id="error" style="display:none;">
-    <p id="error-text"></p>
+  <div id="message" style="display:none;">
+    <p id="message-text"></p>
   </div>
 
   <div id="delete-modal-bg" style="display:none;">
@@ -1135,8 +1316,8 @@ const chatPanel = document.getElementById('chat-panel');
 const profileMenu = document.getElementById('profile-menu');
 const chatBox = document.getElementById('chat-box');
 const sideBar = document.getElementById('sidebar');
-const errorBox = document.getElementById('error');
-const errorText = document.getElementById('error-text');
+const messageBox = document.getElementById('message');
+const messageText = document.getElementById('message-text');
 const profileName = document.getElementById('profile-name');
 const chatText = document.getElementById('chat-text');
 const chatButton = document.getElementById('chat-button');
@@ -1157,6 +1338,14 @@ const summaryButton = document.getElementById('summary-button');
 const summaryPanel = document.getElementById('summary-panel');
 const sessionSummarySelect = document.getElementById('session-summary-select');
 const summaryWrapper = document.getElementById('summary-wrapper');
+const findInput = document.getElementById('find-input');
+const findButton = document.getElementById('find-button');
+const replaceInput = document.getElementById('replace-input');
+const replaceButton = document.getElementById('replace-button');
+const searchResults = document.getElementById('search-results');
+const caseSensitiveCheckbox = document.getElementById('case-sensitive');
+const wholeWordCheckbox = document.getElementById('whole-word');
+const regexCheckbox = document.getElementById('regex');
 let noteResponse = undefined;
 let hideTimeout = undefined;
 let panelOpened = 'add';
@@ -1181,13 +1370,21 @@ function toggleProfileMenu(event) {
 let errorFadeTimeout = undefined;
 let errorHideTimeout = undefined;
 function displayError(text) {
-  errorText.innerText = text;
-  errorBox.style.display = 'flex';
-  errorBox.classList.remove('fade-out-animation')
+  displayMessage(text, 'error')
+}
+function displayMessage(text, type) {
+  if (!type) {
+    type = 'message';
+  }
+  messageText.className = '';
+  messageText.innerText = text;
+  messageBox.style.display = 'flex';
+  messageBox.classList.remove('fade-out-animation')
   clearTimeout(errorFadeTimeout);
   clearTimeout(errorHideTimeout);
-  errorFadeTimeout = setTimeout(()=>{errorBox.classList.add('fade-out-animation');}, 3000);
-  errorHideTimeout = setTimeout(()=>{errorBox.style.display = 'none';}, 6000);
+  errorFadeTimeout = setTimeout(()=>{messageBox.classList.add('fade-out-animation');}, 3000);
+  errorHideTimeout = setTimeout(()=>{messageBox.style.display = 'none';}, 6000);
+  messageText.classList.add(type);
 }
 async function generateCode(event) {
   event.preventDefault();
@@ -1225,9 +1422,10 @@ async function submitCode(event) {
     csrfToken = response.headers.get('x-csrf-token');
     submitCodeDiv.style.display = 'none';
     showUi(true, phoneNumber.value);
-    loadPreviousQueries();
-    loadNotesList();
-    getPreviousSummaries();
+    await loadPreviousQueries();
+    await loadNotesList();
+    await getPreviousSummaries();
+    await loadSearchCache();
   } else {
     try {
       const data = await response.json();
@@ -1269,9 +1467,10 @@ async function changeUiBasedOnLoginState() {
     try {
       const data = await response.json();
       showUi(true, data.phone);
-      loadPreviousQueries();
-      loadNotesList();
-      getPreviousSummaries();
+      await loadPreviousQueries();
+      await loadNotesList();
+      await getPreviousSummaries();
+      await loadSearchCache();
     } catch {
       displayError("Error parsing the response, please log in again");
       generateCodeDiv.style.display = 'flex';
@@ -1457,6 +1656,24 @@ async function getPreviousSummaries(event) {
     displayError("Failed to get previous queries");
   }
 }
+async function loadSearchCache(event) {
+  let response = await fetch('https://api.dnd.elliscode.com/load-cache', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      console.log("loaded cache");
+    } catch {
+      displayError("Failed to load search cache");
+    }
+  } else {
+    displayError("Failed to load search cache");
+  }
+}
 async function handleChatSubmit(event) {
   event.preventDefault();
   if (chatText.disabled || chatButton.disabled) {
@@ -1509,7 +1726,7 @@ function appendCard(parent, sibling, question, answer, model) {
     topBarDiv.classList.add('top-bar');
     if (parent.id == 'summary-panel') {
       let button = document.createElement('button');
-      button.innerText = "Copy markdown";
+      button.innerText = "Copy Markdown";
       button.addEventListener('click', (event)=>{copyMarkdown(event, answer);});
       topBarDiv.appendChild(button);
     } else {
@@ -1614,7 +1831,7 @@ async function saveNotePanel(event) {
       } catch {
         console.log(data.content);
       }
-      loadNotesList(()=>{loadNote(filename, ()=>{switchPanel('notes-panel');});});
+      await loadNotesList(()=>{loadNote(filename, ()=>{switchPanel('notes-panel');});});
     } catch {
       displayError("Failed to write note");
       switchPanel('notes-panel')
@@ -1655,7 +1872,7 @@ async function deleteNote(event) {
         console.log(data.content);
       }
       removeContent();
-      loadNotesList(()=>{switchPanel('notes-panel'); closeDeleteModal();});
+      await loadNotesList(()=>{switchPanel('notes-panel'); closeDeleteModal();});
     } catch {
       displayError("Failed to delete note");
       switchPanel('notes-panel')
@@ -1664,6 +1881,103 @@ async function deleteNote(event) {
     displayError("Failed to delete note");
       switchPanel('notes-panel')
   }
+}
+function disableFindUi(disable) {
+  if (disable) {
+    findInput.disabled = `${disable}`;
+    findButton.disabled = `${disable}`;
+    replaceInput.disabled = `${disable}`;
+    replaceButton.disabled = `${disable}`;
+  } else {
+    findInput.removeAttribute('disabled');
+    findButton.removeAttribute('disabled');
+    replaceInput.removeAttribute('disabled');
+    replaceButton.removeAttribute('disabled');
+  }
+}
+let findTimeout = undefined;
+async function performFind(event) {
+  disableFindUi(true);
+  loadingWheels.forEach(x=>x.style.display = 'block');
+  searchResults.style.display = 'none';
+  while(searchResults.firstElementChild) {
+    searchResults.firstElementChild.remove();
+  }
+  clearTimeout(findTimeout);
+  findTimeout = setTimeout(displayMessage, 500, 'Loading files from S3...')
+  await loadSearchCache();
+  clearTimeout(findTimeout);
+  await loadSearchResult();
+  disableFindUi(false);
+  loadingWheels.forEach(x=>x.style.display = 'none');
+  searchResults.style.display = 'flex';
+}
+async function loadSearchResult(event) {  
+  let response = await fetch('https://api.dnd.elliscode.com/find', {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({
+      csrf: csrfToken,
+      find: findInput.value,
+      caseSensitive: caseSensitiveCheckbox.checked,
+      wholeWord: wholeWordCheckbox.checked,
+      regex: regexCheckbox.checked,
+    })
+  });
+  if (200 <= response.status && response.status < 300) {
+    try {
+      const data = await response.json();
+      try {
+        const keys = Object.keys(data)
+        for (let key of keys) {
+          let searchResultDiv = document.createElement('div');
+          searchResultDiv.classList.add('search-result');
+          let fileNameSpan = document.createElement('span');
+          fileNameSpan.classList.add('filename');
+          fileNameSpan.innerText = key;
+          searchResultDiv.appendChild(fileNameSpan);
+          searchResults.appendChild(searchResultDiv);
+          let searchContentDiv = document.createElement('div');
+          searchContentDiv.classList.add('search-content');
+          for (let item of data[key]) {
+            const textParts = [];
+            let previousEnd = 0;
+            for (let pair of item.highlights) {
+              let span = document.createElement('span');
+              span.innerText = item.chunk.substring(previousEnd - item.chunkStart, pair.start - item.chunkStart);
+              textParts.push(span);
+              let highlight = document.createElement('span');
+              highlight.classList.add('highlight');
+              highlight.innerText = item.chunk.substring(pair.start - item.chunkStart, pair.end - item.chunkStart);
+              textParts.push(highlight);
+              previousEnd = pair.end;
+            }
+            {
+              let span = document.createElement('span');
+              span.innerText = item.chunk.substring(previousEnd - item.chunkStart);
+              textParts.push(span);
+            }
+            for (let span of textParts) {
+              searchContentDiv.appendChild(span);
+            }
+          }
+          searchResults.appendChild(searchContentDiv);
+        }
+      } catch {
+        console.log('error');
+        console.log(data);
+      }
+    } catch {
+      displayError("Failed to load search results");
+      switchPanel('notes-panel')
+    }
+  } else {
+    displayError("Failed to load search results");
+      switchPanel('notes-panel')
+  }
+}
+async function performReplace(event) {
+  
 }
 changeUiBasedOnLoginState();
   </script>

@@ -20,6 +20,9 @@ import traceback
 
 PREFIX = "session-notes/"
 SAFE_MD = re.compile(r"^[/A-Za-z0-9_-]+\.md$", re.IGNORECASE)
+FIND_LIMIT = 1000
+
+file_cache = {}
 
 
 @authenticate
@@ -374,3 +377,110 @@ def validate_filename(name: str):
     if not SAFE_MD.fullmatch(name):
         return None
     return name
+
+
+@authenticate
+def find_route(event, user_data, body):
+    find_term = body.get("find")
+    case_sensitive = body.get("caseSensitive", False)
+    whole_word = body.get("wholeWord", False)
+    regex = body.get("regex", False)
+    if not find_term:
+        return format_response(
+            event=event,
+            http_code=400,
+            body="No find provided"
+        )
+
+    if not regex:
+        find_term = re.escape(find_term)
+    if whole_word:
+        find_term = r"\b" + find_term + r"\b"
+    if case_sensitive:
+        pattern = re.compile(find_term)
+    else:
+        pattern = re.compile(find_term, re.IGNORECASE, )
+
+    load_cache(event)
+
+    output = find_text(pattern)
+
+    return format_response(
+        event=event,
+        http_code=200,
+        body=output
+    )
+
+
+@authenticate
+def replace_route(event, user_data, body):
+    return format_response(
+        event=event,
+        http_code=200,
+        body="Not implemented :("
+    )
+
+@authenticate
+def load_cache_route(event, user_data, body):
+    load_cache(event)
+    return format_response(
+        event=event,
+        http_code=200,
+        body="Loaded cache successfully"
+    )
+
+
+def load_cache(event):
+    paginator = s3.get_paginator("list_objects_v2")
+    existing_keys = list(file_cache.keys())
+    for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=PREFIX):
+        for obj in page.get("Contents", []):
+            name = obj["Key"].removeprefix(PREFIX)
+            e_tag = obj["ETag"]
+            if name in existing_keys:
+                existing_keys.remove(name)
+            if name not in file_cache or (
+                name in file_cache and file_cache[name]["ETag"] != e_tag
+            ):
+                file_cache[name] = {
+                    "ETag": e_tag,
+                    "body": s3.get_object(Bucket=S3_BUCKET, Key=obj["Key"])["Body"].read().decode("utf-8"),
+                }
+    for key in existing_keys:
+        file_cache.pop(key, None)
+
+
+def find_text(pattern: re.Pattern):
+    count = FIND_LIMIT
+    output = {}
+    for name in file_cache.keys():
+        # now search the data
+        previous_chunk_end: int | None = None
+        for match in pattern.finditer(file_cache[name]['body']):
+            chunk_start = max(match.start() - 20, 0)
+            chunk_end = min(match.end() + 20, len(file_cache[name]['body']))
+            chunk = file_cache[name]['body'][chunk_start:chunk_end]
+            if name not in output:
+                output[name] = []
+            if previous_chunk_end and previous_chunk_end >= chunk_start:
+                index = len(output[name]) - 1
+                previous_chunk_start = output[name][index]['chunkStart']
+                output[name][index]['chunk'] = file_cache[name]['body'][previous_chunk_start:chunk_end]
+                output[name][index]['chunkEnd'] = chunk_end
+                output[name][index]['highlights'].append({'start': match.start(), 'end': match.end()});
+            else:
+                output[name].append({
+                    'chunk': chunk,
+                    'chunkStart': chunk_start,
+                    'chunkEnd': chunk_end,
+                    'highlights': [
+                        {'start': match.start(), 'end': match.end()}
+                    ]
+                })
+            previous_chunk_end = chunk_end
+            count = count - 1
+            if count <= 0:
+                break
+        if count <= 0:
+            break
+    return output
