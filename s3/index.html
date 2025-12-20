@@ -517,14 +517,17 @@ input, textarea {
   border-radius: 5px;
   padding: 10px 20px;
 }
-.search-result .search-content:nth-child(odd) {
+#search-results .search-content:nth-child(odd) {
   background-color:#282828;
 }
-.search-result .search-content:nth-child(even) {
+#search-results .search-content:nth-child(even) {
   background-color:#222;
 }
 #search-panel > div {
   width:100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .search-controls {
   display: flex;
@@ -1125,6 +1128,9 @@ option {
 }
 .highlight {
   background-color:rgba(98, 86, 255, 0.716);
+}
+#replace-button {
+  cursor:not-allowed;
 }
   </style>
 </head>
@@ -1937,9 +1943,9 @@ async function loadSearchResult(event) {
           fileNameSpan.innerText = key;
           searchResultDiv.appendChild(fileNameSpan);
           searchResults.appendChild(searchResultDiv);
-          let searchContentDiv = document.createElement('div');
-          searchContentDiv.classList.add('search-content');
           for (let item of data[key]) {
+            let searchContentDiv = document.createElement('div');
+            searchContentDiv.classList.add('search-content');
             const textParts = [];
             let previousEnd = 0;
             for (let pair of item.highlights) {
@@ -1960,8 +1966,8 @@ async function loadSearchResult(event) {
             for (let span of textParts) {
               searchContentDiv.appendChild(span);
             }
+            searchResults.appendChild(searchContentDiv);
           }
-          searchResults.appendChild(searchContentDiv);
         }
       } catch {
         console.log('error');
