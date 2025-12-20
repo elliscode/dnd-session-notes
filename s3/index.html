@@ -474,7 +474,6 @@ input, textarea {
   flex-grow:1;
 }
 .find-replace-bar label span:hover {
-  background-color:#444;
   cursor:pointer;
 }
 .find-replace-bar label input[type="checkbox"] {
@@ -482,9 +481,6 @@ input, textarea {
 }
 .find-replace-bar label span {
   display:block;
-}
-.find-replace-bar label input[type="checkbox"]:checked + span {
-  background-color:#555;
 }
 .find-options {
   display:flex;
@@ -513,14 +509,7 @@ input, textarea {
 .search-content {
   position: relative;
   display: block;
-  border-radius: 5px;
   padding: 10px 20px;
-}
-#search-results .search-content:nth-child(odd) {
-  background-color:#282828;
-}
-#search-results .search-content:nth-child(even) {
-  background-color:#222;
 }
 #search-panel > div {
   width:100%;
@@ -841,9 +830,11 @@ input, textarea {
     border-radius: 20px;
     padding: 20px;
     box-sizing: border-box;
-    background-color: #282828;
     max-width:800px;
     width:100%;
+  }
+  .dark #search-panel > div {
+    background-color: #282828;
   }
   .find-options {
     flex-direction:row;
@@ -1148,6 +1139,27 @@ option {
 .dark .filename:hover {
   background-color:#555;
   cursor:pointer;
+}
+.dark .find-replace-bar label span:hover {
+  background-color:#444;
+}
+.find-replace-bar label input[type="checkbox"]:checked + span {
+  background-color:#ccc;
+}
+.dark .find-replace-bar label input[type="checkbox"]:checked + span {
+  background-color:#555;
+}
+#search-results .search-content:nth-child(odd) {
+  background-color:#fefefe;
+}
+#search-results .search-content:nth-child(even) {
+  background-color:#f8f8f8;
+}
+.dark #search-results .search-content:nth-child(odd) {
+  background-color:#282828;
+}
+.dark #search-results .search-content:nth-child(even) {
+  background-color:#222;
 }
   </style>
 </head>
