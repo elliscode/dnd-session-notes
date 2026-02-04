@@ -42,5 +42,5 @@ Once you run the script with whatever flavor of python (uv, pipenv, whatever idc
 To make the transcripts, i use the `hear` command, here's an example
 
 ```
-./hear -p -d -i ../../dnd-session-notes/session-notes/2025-12-09.mp3 > ../../dnd-session-notes/session-notes/2025-12-09.txt
+./hear -p -d -i ../../dnd-session-notes/session-notes/sessions/2026-02-03.mp3 > ../../dnd-session-notes/session-notes/sessions/2026-02-03.txt
 ```
