@@ -243,19 +243,7 @@ def delete_note_route(event, user_data, body):
         )
     full_path = PREFIX + filename
     s3.delete_object(Bucket=S3_BUCKET, Key=full_path)
-    try:
-        lambda_client.invoke(
-            FunctionName="dnd-rag-ingest-gemini",
-            InvocationType="Event",
-            Payload=json.dumps(user_data)
-        )
-        lambda_client.invoke(
-            FunctionName="dnd_rag_ingest",
-            InvocationType="Event",
-            Payload=json.dumps(user_data)
-        )
-    except:
-        traceback.print_exc()
+    trigger_ingest_lambdas(user_data)
     return format_response(
         event=event,
         http_code=200,
@@ -290,19 +278,7 @@ def set_note_route(event, user_data, body):
             body="Failed to write file",
         )
     output['write'] = filename
-    try:
-        lambda_client.invoke(
-            FunctionName="dnd-rag-ingest-gemini",
-            InvocationType="Event",
-            Payload=json.dumps(user_data)
-        )
-        lambda_client.invoke(
-            FunctionName="dnd_rag_ingest",
-            InvocationType="Event",
-            Payload=json.dumps(user_data)
-        )
-    except:
-        traceback.print_exc()
+    trigger_ingest_lambdas(user_data)
     return format_response(
         event=event,
         http_code=200,
@@ -447,6 +423,8 @@ def replace_route(event, user_data, body):
 
     write_back_cache(event)
 
+    trigger_ingest_lambdas(user_data)
+
     return format_response(
         event=event,
         http_code=200,
@@ -548,3 +526,19 @@ def find_text(pattern: re.Pattern):
         if count <= 0:
             break
     return output
+
+
+def trigger_ingest_lambdas(user_data):
+    try:
+        lambda_client.invoke(
+            FunctionName="dnd-rag-ingest-gemini",
+            InvocationType="Event",
+            Payload=json.dumps(user_data)
+        )
+        lambda_client.invoke(
+            FunctionName="dnd_rag_ingest",
+            InvocationType="Event",
+            Payload=json.dumps(user_data)
+        )
+    except:
+        traceback.print_exc()
