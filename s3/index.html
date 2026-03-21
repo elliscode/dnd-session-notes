@@ -1836,7 +1836,10 @@ function loadNoteFormPanel(event) {
 }
 async function saveNotePanel(event) {
   event.preventDefault();
-  const filename = fileNameInput.value;
+  let filename = fileNameInput.value;
+  if (!filename.endsWith(".md")) {
+    filename = filename + ".md";
+  }
   let oldFilename = undefined;
   if (panelOpened == 'edit') {
     oldFilename = noteResponse.filename;
