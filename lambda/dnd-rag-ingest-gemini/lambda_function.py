@@ -5,6 +5,7 @@ import json
 import sys
 import time
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 import boto3
@@ -17,6 +18,10 @@ S3_PENDING = os.path.join("gemini.pending")
 FILE_SEARCH_STORE_NAME = os.environ.get("FILE_SEARCH_STORE_NAME")
 LAMBDA_TASK_ROOT = os.environ.get("LAMBDA_TASK_ROOT")
 HASH_CHUNK_SIZE = 4096
+# Lambda's configured timeout is 15 minutes; a lock older than this could only
+# be left over from a run that was killed by the platform (timeout/OOM) rather
+# than one still legitimately in progress, so it's safe to reclaim.
+PENDING_TTL_SECONDS = 16 * 60
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -247,13 +252,30 @@ def synchronize_files(gemini_client, s3_client, s3_map: dict, remote_map: dict):
 
 
 
+def is_pending_locked(s3_client) -> bool:
+    response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_PENDING, MaxKeys=1)
+    if 'Contents' not in response:
+        return False
+
+    last_modified = response['Contents'][0]['LastModified']
+    age_seconds = (datetime.now(timezone.utc) - last_modified).total_seconds()
+
+    if age_seconds < PENDING_TTL_SECONDS:
+        return True
+
+    logger.warning(
+        f"Reclaiming stale '{S3_PENDING}' lock (age: {age_seconds:.0f}s, exceeds "
+        f"TTL of {PENDING_TTL_SECONDS}s). Previous run likely timed out without cleaning up."
+    )
+    return False
+
+
 def lambda_handler(event, context):
     logger.info(event)
     s3_client = boto3.client('s3')
+    pending_created = False
     try:
-        gemini_client = genai.Client()
-
-        if 'Contents' in s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_PENDING, MaxKeys=1):
+        if is_pending_locked(s3_client):
             message = 'Already running, skipping this invocation...'
             logger.info(message)
             return {
@@ -261,8 +283,11 @@ def lambda_handler(event, context):
                 'body': json.dumps({'message': message})
             }
 
-        logger.info(f"Writing '.pending' file to : {S3_BUCKET}, Prefix: {S3_PREFIX}")
+        logger.info(f"Writing '{S3_PENDING}' lock to: {S3_BUCKET}, Prefix: {S3_PREFIX}")
         s3_client.put_object(Bucket=S3_BUCKET, Key=S3_PENDING, Body="".encode('utf-8'))
+        pending_created = True
+
+        gemini_client = genai.Client()
 
         logger.info(f"Starting sync from S3 Bucket: {S3_BUCKET}, Prefix: {S3_PREFIX}")
         logger.info(f"Target File Search Store: {FILE_SEARCH_STORE_NAME}")
@@ -276,8 +301,6 @@ def lambda_handler(event, context):
 
         synchronize_files(gemini_client, s3_client, s3_map, remote_map)
 
-        s3_client.delete_object(Bucket=S3_BUCKET, Key=S3_PENDING)
-
         return {
             'statusCode': 200,
             'body': json.dumps({'message': 'File synchronization completed successfully.'})
@@ -285,11 +308,14 @@ def lambda_handler(event, context):
 
     except Exception as e:
         logger.error(f"FATAL ERROR in Lambda execution: {e}", exc_info=True)
-        s3_client.delete_object(Bucket=S3_BUCKET, Key=S3_PENDING)
         return {
             'statusCode': 500,
             'body': json.dumps({'error': f'Synchronization failed: {str(e)}'})
         }
+    finally:
+        if pending_created:
+            s3_client.delete_object(Bucket=S3_BUCKET, Key=S3_PENDING)
+            logger.info(f"Removed '{S3_PENDING}' lock.")
 
 if __name__ == '__main__':
     lambda_handler({}, None)

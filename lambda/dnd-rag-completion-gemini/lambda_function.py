@@ -8,7 +8,7 @@ from google.genai import types
 from google.genai.errors import APIError
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 FILE_SEARCH_STORE_NAME = "fileSearchStores/dd-session-notes-rag-store-vksej7ft2qat"
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3.7-flash"
 LAMBDA_TASK_ROOT = os.environ.get("LAMBDA_TASK_ROOT")
 API_KEY = os.environ.get("GEMINI_API_KEY")
 

@@ -5,11 +5,12 @@ import boto3
 import json
 import traceback
 
+from botocore.exceptions import ClientError
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3.7-flash"
 LAMBDA_TASK_ROOT = os.environ.get("LAMBDA_TASK_ROOT")
 API_KEY = os.environ.get("GEMINI_API_KEY")
 S3_BUCKET = os.environ.get("S3_BUCKET")
@@ -87,7 +88,14 @@ def lambda_handler(event, context):
                 file_path = f"/tmp/{file_name['name']}"
             else:
                 file_path = f"{file_name['name']}"
-            s3.download_file(Bucket=S3_BUCKET, Key=f"session-notes/{file_name['prefix']}{file_name['name']}", Filename=file_path)
+            s3_key = f"session-notes/{file_name['prefix']}{file_name['name']}"
+            try:
+                s3.download_file(Bucket=S3_BUCKET, Key=s3_key, Filename=file_path)
+            except ClientError as e:
+                if e.response['Error']['Code'] == '404':
+                    print(f"⚠️ Not found in S3: {s3_key}. Skipping...")
+                    continue
+                raise
             file_paths.append(file_path)
 
         # --- 1. Upload Files ---
