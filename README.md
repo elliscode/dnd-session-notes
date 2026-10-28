@@ -37,10 +37,14 @@ This script syncs between your local `session-notes` folder and a S3 bucket defi
 
 Once you run the script with whatever flavor of python (uv, pipenv, whatever idc), it will interactively ask you how to resolve conflicts between files.
 
+```
+cd session-notes && uv run --with boto3 sync-notes.py
+```
+
 ### Hear command
 
 To make the transcripts, i use the `hear` command, here's an example
 
 ```
-./hear -p -d -i ../../dnd-session-notes/session-notes/sessions/2026-09-30.mp3 > ../../dnd-session-notes/session-notes/sessions/2026-09-30-transcript.md
+sh transcribe-session.sh 2026-09-30
 ```
